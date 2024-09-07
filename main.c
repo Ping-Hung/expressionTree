@@ -1,24 +1,37 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
+#include "utils.h"
 #include "expressionTree.h"
 
 int main(int argc, char *argv[]) 
 {
     //ask for input length
-    int expressionLength = 0;
+    int expectedLength = 0;
     char inputBuffer[4];    //assume at most 4 digit decimal number
-
-    while (expressionLength <= 0)
+    while (expectedLength <= 0)
     {
         fprintf(stdout, "enter expression length: ");
-        fscanf(stdin, "%4s", inputBuffer); // MUST specify exactly how many char read for memory safety
-        expressionLength = strtol(inputBuffer, NULL, 10);
+        fscanf(stdin, "%4s", inputBuffer); // MUST spcify exactly how many char read for memory safety
+        expectedLength = strtol(inputBuffer, NULL, 10);
     }
     
     //alloc string buffer
-    char *str = malloc(sizeof(*str) * expressionLength);
-    
-    fprintf(stdout, "str \"%s\" with length %d is entered\n", str, expressionLength);
+    int strLength = 2*expectedLength - 1;
+    char *str = malloc(sizeof(*str) * strLength);
+
+    //enter expression
+    fprintf(stdout, "enter expression, enter \";\" when expression is completed: ");
+    char *readResult = fgets(str, strLength, stdin);
+    if(readResult == NULL) 
+    {
+        fprintf(stderr, "something wrong happened when reading input");
+        exit(EXIT_FAILURE);
+    }
+    int actualLength = count_acutal_length(str, strLength);
+    fprintf(stdout, "str \"%s\" with length %d is entered, expected length = %d\n", 
+            str, actualLength, expectedLength);
+
     //build expressionTree
 
     //verify expressionTree
