@@ -21,7 +21,10 @@ int main(int argc, char *argv[])
     char *str = malloc(sizeof(*str) * strLength);
 
     //enter expression
-    fprintf(stdout, "enter expression, enter \";\" when expression is completed: ");
+    fprintf(stdout, "enter expression, end with \';\': ");
+    //clear the input buffer (so no weird thing happning at fgets)
+    for(char ch = getchar(); (ch != EOF) && (ch != '\n'); ch = getchar());
+    //receiving user input
     char *readResult = fgets(str, strLength, stdin);
     if(readResult == NULL) 
     {
