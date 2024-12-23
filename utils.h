@@ -1,4 +1,4 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int count_acutal_length(char *str, int strLength);
+int count_acutal_length(char *str);

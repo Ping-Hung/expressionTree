@@ -1,15 +1,16 @@
 #include "utils.h"
 
-int count_acutal_length(char *str, int strLength)
+int count_acutal_length(char *str)
 {
-    if(str == NULL) 
+    if (str == NULL)
     {
         fprintf(stderr, "input str to %s should be a valid string\n", __func__);
         return -1;
     }
 
     int actualLength = 0;
-    for(char ch = *str; ch != '\0'; ch += 1) {
+    for (char ch = *str; ch != '\0'; ch = *(++str))
+    {
         actualLength += 1;
     }
 
