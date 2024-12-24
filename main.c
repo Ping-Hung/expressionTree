@@ -4,12 +4,15 @@
 #include <string.h>
 #include "utils.h"
 #include "expressionTree.h"
+#include "tokenizer.h"
+
+#define MAX_DECIMAL_DIGITS 4
 
 int main(int argc, char *argv[])
 {
     // ask for input length
     int expectedLength = 0;
-    char inputBuffer[4]; // assume at most 4 digit decimal number
+    char inputBuffer[MAX_DECIMAL_DIGITS];
     while (expectedLength <= 0)
     {
         fprintf(stdout, "enter expression length: ");
@@ -23,6 +26,7 @@ int main(int argc, char *argv[])
 
     // enter expression
     fprintf(stdout, "enter expression, end with \';\': ");
+
     // clear the input buffer (so no weird thing happning at fgets)
     for (char ch = getchar(); (ch != EOF) && (ch != '\n'); ch = getchar());
 
