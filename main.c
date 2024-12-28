@@ -8,6 +8,9 @@
 
 #define MAX_DECIMAL_DIGITS 4
 
+static void _print_tkz(Tokenizer *a_tkz);
+static void _print_tokens(char *tokens, int n_tokens);
+
 int main(int argc, char *argv[])
 {
     // ask for input length
@@ -28,25 +31,57 @@ int main(int argc, char *argv[])
     fprintf(stdout, "enter expression, end with \';\': ");
 
     // clear the input buffer (so no weird thing happning at fgets)
-    for (char ch = getchar(); (ch != EOF) && (ch != '\n'); ch = getchar());
+    for (char ch = getchar(); (ch != EOF) && (ch != '\n'); ch = getchar())
+        ;
 
     // receiving user input
-    char *readResult = fgets(str, strLength, stdin);
-    if (readResult == NULL)
+    char *expr = fgets(str, strLength, stdin);
+    if (expr == NULL)
     {
         fprintf(stderr, "something wrong happened when reading input");
-        fprintf(stderr, "get %s\n", readResult);
+        fprintf(stderr, "get %s\n", expr);
         exit(EXIT_FAILURE);
     }
-    int actualLength = count_acutal_length(str);
-    fprintf(stdout, "str \"%s\" with length %d is entered, expected length = %d\n",
-            str, actualLength, expectedLength);
 
+    fprintf(stderr, "%s\n", expr);
+
+    // tokenize input string
+    Tokenizer tkz = init_tokenizer(expr);
+    tokenize(&tkz);
+    _print_tkz(&tkz);
     // build expressionTree
 
     // verify expressionTree
 
-    // free string buffer
-    free(str);
+    // free tzk
+    destroy_tokenizer(&tkz);
+
     return EXIT_SUCCESS;
+}
+
+static void _print_tkz(Tokenizer *a_tkz)
+{
+    if (a_tkz)
+    {
+        printf("tkz: \n");
+        printf("{ \n");
+        printf(" raw == %s", a_tkz->raw); // raw should include a newline
+        printf(" length == %d\n", a_tkz->length);
+        _print_tokens(a_tkz->tokens, a_tkz->n_tokens);
+        printf(" n_tokens == %d\n", a_tkz->n_tokens);
+        printf("}\n");
+    }
+}
+
+static void _print_tokens(char *tokens, int n_tokens)
+{
+    if (tokens)
+    {
+        printf(" tokens == ");
+        for (int i = 0; i < n_tokens; ++i)
+        {
+            printf("%c", tokens[i]);
+        }
+        printf("\n");
+    }
 }
