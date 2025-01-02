@@ -35,18 +35,16 @@ int main(int argc, char *argv[])
         ;
 
     // receiving user input
-    char *expr = fgets(str, strLength, stdin);
-    if (expr == NULL)
+    if (fgets(str, strLength, stdin) == NULL)
     {
         fprintf(stderr, "something wrong happened when reading input");
-        fprintf(stderr, "get %s\n", expr);
         exit(EXIT_FAILURE);
     }
 
-    fprintf(stderr, "%s\n", expr);
+    fprintf(stderr, "%s\n", str);
 
     // tokenize input string
-    Tokenizer tkz = init_tokenizer(expr);
+    Tokenizer tkz = init_tokenizer(str);
     tokenize(&tkz);
     _print_tkz(&tkz);
     // build expressionTree
@@ -55,6 +53,8 @@ int main(int argc, char *argv[])
 
     // free tzk
     destroy_tokenizer(&tkz);
+
+    // free expressionTree
 
     return EXIT_SUCCESS;
 }

@@ -4,11 +4,14 @@ SRC = *.c
 HEADERS = *.h
 EXECUTABLE = expressionTree
 
-$(EXECUTABLE): $(SRC)
+$(EXECUTABLE): $(SRC) $(HEADERS)
 	$(CC) -o $(EXECUTABLE) $(SRC) $(FLAGS)
 
-test: $(EXECUTABLE)
+test: $(EXECUTABLE) $(SRC)
 	./$(EXECUTABLE)
+
+valgrind: $(SRC)
+	valgrind ./$(EXECUTABLE)
 
 clean:
 	rm -f $(EXECUTABLE)
