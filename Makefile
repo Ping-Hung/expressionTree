@@ -1,7 +1,7 @@
 CC = gcc
 FLAGS = -std=c11 -Wall -Wvla -pedantic -g
-SRC = *.c
-HEADERS = *.h
+SRC = src/*.c
+HEADERS = headers/*.h
 EXECUTABLE = expressionTree
 
 $(EXECUTABLE): $(SRC) $(HEADERS)
