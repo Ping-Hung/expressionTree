@@ -2,9 +2,8 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
-#include "utils.h"
-#include "expressionTree.h"
-#include "tokenizer.h"
+#include "headers/expressionTree.h"
+#include "headers/tokenizer.h"
 
 #define MAX_DECIMAL_DIGITS 4
 
