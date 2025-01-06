@@ -11,6 +11,9 @@
 /*TokenStr is a "string" type that holds at most 1024 characters (including '\0')*/
 typedef char TokensStr[MAX_STR_LEN];
 
+// this should be a LUT (Look Up Table) for all valid tokens
+char validTokens[256] = {'\0'};
+
 typedef struct
 {
   char const *raw;
