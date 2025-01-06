@@ -1,11 +1,10 @@
 #include <stdio.h>
 #include "../headers/tokenizer.h"
 
-static bool _is_valid_operator(char ch);
 static int _raw_length(char const *raw);
 static void _update_tokens_and_n_tokens(Tokenizer *a_tkz);
 static void _array_fillin(Tokenizer *a_tkz);
-static inline _init_validTokens();
+static void _init_validTokens();
 
 Tokenizer init_tokenizer(char const *raw)
 {
@@ -48,29 +47,33 @@ void destroy_tokenizer(Tokenizer *a_tkz)
   }
 }
 
-static inline _init_validTokens()
+static void _init_validTokens()
 {
   char operators[] = {'+', '-', '*', '/', '%', '(', ')'};
   for (int i = 0; i < sizeof(operators) / sizeof(operators[0]); ++i)
   {
-    validTokens[operators[i]] = operators[i];
+    int index = operators[i];
+    validTokens[index] = operators[i];
   }
 
   // alphabets
   for (char ch = 'a'; ch <= 'z'; ++ch)
   {
-    validTokens[ch] = ch;
+    int idx = ch;
+    validTokens[idx] = ch;
   }
 
   for (char ch = 'A'; ch <= 'Z'; ++ch)
   {
-    validTokens[ch] = ch;
+    int idx = ch;
+    validTokens[idx] = ch;
   }
 
   // numerics
   for (char ch = '0'; ch <= '9'; ++ch)
   {
-    validTokens[ch] = ch;
+    int idx = ch;
+    validTokens[idx] = ch;
   }
 }
 
@@ -91,12 +94,13 @@ static int _raw_length(char const *raw)
 
 static void _update_tokens_and_n_tokens(Tokenizer *a_tkz)
 {
-  for (char *curr = a_tkz->raw; *curr != ';'; curr += 1)
+  for (char const *a_ch = a_tkz->raw; *a_ch != ';'; a_ch += 1)
   {
     assert(a_tkz->n_tokens < a_tkz->length);
-    if (validTokens[*curr] != '\0')
+    int index = *a_ch;
+    if (validTokens[index] != '\0')
     {
-      a_tkz->tokens[a_tkz->n_tokens] = *curr;
+      a_tkz->tokens[a_tkz->n_tokens] = *a_ch;
       a_tkz->n_tokens += 1;
     }
   }
