@@ -1,12 +1,15 @@
 #ifndef __TOKENIZER_H__
 #define __TOKENIZER_H__
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 #include <stdbool.h>
 #include <ctype.h>
+
+#define MAX_STR_LEN 1024
+/*TokenStr is a "string" type that holds at most 1024 characters (including '\0')*/
+typedef char TokensStr[MAX_STR_LEN];
 
 typedef struct
 {
@@ -14,6 +17,7 @@ typedef struct
   int length;
   char *tokens;
   int n_tokens;
+  TokensStr *array;
 } Tokenizer;
 
 Tokenizer init_tokenizer(char const *raw);

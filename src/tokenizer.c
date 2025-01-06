@@ -1,7 +1,10 @@
+#include <stdio.h>
 #include "../headers/tokenizer.h"
 
 static bool _is_valid_operator(char ch);
 static int _raw_length(char const *raw);
+static void _update_tokens_and_n_tokens(Tokenizer *a_tkz);
+static void _array_fillin(Tokenizer *a_tkz);
 
 Tokenizer init_tokenizer(char const *raw)
 {
@@ -13,23 +16,17 @@ Tokenizer init_tokenizer(char const *raw)
 }
 
 void tokenize(Tokenizer *a_tkz)
-{ // fill in tokens and n_tokens fields
+{ // fill in tokens, n_tokens, and array fields
   assert(a_tkz);
 
   // assume len(tokens) <= len(raw)
   a_tkz->tokens = malloc(sizeof(*(a_tkz->tokens)) * a_tkz->length);
-
   // count number of tokens in raw and update n_tokens
-  for (char *curr = a_tkz->raw; *curr != ';'; curr += 1)
-  {
-    assert(a_tkz->n_tokens < a_tkz->length);
-    if (_is_valid_operator(*curr) || isalnum(*curr))
-    {
-      a_tkz->tokens[a_tkz->n_tokens] = *curr;
-      a_tkz->n_tokens += 1;
-    }
-  }
-  a_tkz->tokens[a_tkz->n_tokens + 1] = '\0';
+  _update_tokens_and_n_tokens(a_tkz);
+
+  // fill in array
+  a_tkz->array = malloc(sizeof(*(a_tkz->array)) * a_tkz->n_tokens);
+  _array_fillin(a_tkz);
 }
 
 void destroy_tokenizer(Tokenizer *a_tkz)
@@ -42,6 +39,10 @@ void destroy_tokenizer(Tokenizer *a_tkz)
   if (a_tkz->tokens)
   {
     free(a_tkz->tokens);
+  }
+  if (a_tkz->array)
+  {
+    free(a_tkz->array);
   }
 }
 
@@ -65,4 +66,27 @@ static int _raw_length(char const *raw)
     return len;
   }
   return -1;
+}
+
+static void _update_tokens_and_n_tokens(Tokenizer *a_tkz)
+{
+  for (char *curr = a_tkz->raw; *curr != ';'; curr += 1)
+  {
+    assert(a_tkz->n_tokens < a_tkz->length);
+    if (_is_valid_operator(*curr) || isalnum(*curr))
+    {
+      a_tkz->tokens[a_tkz->n_tokens] = *curr;
+      a_tkz->n_tokens += 1;
+    }
+  }
+  a_tkz->tokens[a_tkz->n_tokens + 1] = '\0';
+}
+
+static void _array_fillin(Tokenizer *a_tkz)
+{
+  if(!a_tkz->array) {
+    fprintf(stderr, "a_tkz->array is not alloc'd\n");
+    assert(a_tkz->array);
+  }
+  
 }
