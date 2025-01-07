@@ -1,6 +1,7 @@
 #ifndef __TOKENIZER_H__
 #define __TOKENIZER_H__
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
@@ -12,7 +13,9 @@
 typedef char TokensStr[MAX_STR_LEN];
 
 // this should be a LUT (Look Up Table) for all valid tokens
-char validTokens[256] = {'\0'};
+// use extern so validTokens (global var) is usable (and identical) throughout all files
+// that includes tokenizer.h
+extern char validTokens[256];
 
 typedef struct
 {

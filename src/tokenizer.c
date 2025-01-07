@@ -1,5 +1,7 @@
-#include <stdio.h>
 #include "../headers/tokenizer.h"
+
+// before using validTokens here, initialize it with the null byte
+char validTokens[256] = {'\0'};
 
 static int _raw_length(char const *raw);
 static void _update_tokens_and_n_tokens(Tokenizer *a_tkz);
@@ -94,7 +96,7 @@ static int _raw_length(char const *raw)
 
 static void _update_tokens_and_n_tokens(Tokenizer *a_tkz)
 {
-  for (char const *a_ch = a_tkz->raw; *a_ch != ';'; a_ch += 1)
+  for (char const *a_ch = a_tkz->raw; *a_ch != ';' && *a_ch != '\0'; a_ch += 1)
   {
     assert(a_tkz->n_tokens < a_tkz->length);
     int index = *a_ch;
@@ -108,10 +110,15 @@ static void _update_tokens_and_n_tokens(Tokenizer *a_tkz)
 }
 
 static void _array_fillin(Tokenizer *a_tkz)
-{
+{ // fill in array for all tokens (each element is a string (char *))
   if (!a_tkz->array)
   {
     fprintf(stderr, "a_tkz->array is not alloc'd\n");
     assert(a_tkz->array);
+  }
+  for (char *begin = a_tkz->tokens; *begin != '\0'; ++begin)
+  {
+    char *end = begin + 1;
+
   }
 }

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
+#include <stdbool.h>
 #include "headers/expressionTree.h"
 #include "headers/tokenizer.h"
 
@@ -9,6 +10,7 @@
 
 static void _print_tkz(Tokenizer *a_tkz);
 static void _print_tokens(char *tokens, int n_tokens);
+static bool _valid_expr_format(char *str);
 
 int main(int argc, char *argv[])
 {
@@ -34,10 +36,9 @@ int main(int argc, char *argv[])
         ;
 
     // receiving user input
-    if (fgets(str, strLength, stdin) == NULL)
+    while (fgets(str, strLength, stdin) == NULL || !_valid_expr_format(str))
     {
-        fprintf(stderr, "something wrong happened when reading input");
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "something wrong happened when reading input, please try entering again\n");
     }
 
     fprintf(stderr, "%s\n", str);
@@ -83,4 +84,17 @@ static void _print_tokens(char *tokens, int n_tokens)
         }
         printf("\n");
     }
+}
+
+static bool _valid_expr_format(char *str)
+{ // check for ';' at the end of the input expression
+    char *a_ch = str;
+    for (; *a_ch != '\0'; a_ch += 1)
+        ;
+    bool is_valid = *(a_ch - 2) == ';';
+    if (!is_valid)
+    {
+        fprintf(stderr, "expression %s is not terminated with \";\"\n", str);
+    }
+    return is_valid;
 }
