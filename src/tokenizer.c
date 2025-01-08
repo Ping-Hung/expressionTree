@@ -8,6 +8,7 @@ static void _update_tokens_and_numchar(Tokenizer *a_tkz);
 static void _array_fillin(Tokenizer *a_tkz);
 static void _init_validTokens();
 static TokenType _get_token_type(char ch);
+static inline bool _is_bin_op(char ch);
 
 Tokenizer init_tokenizer(char const *raw)
 {
@@ -126,18 +127,36 @@ static void _array_fillin(Tokenizer *a_tkz)
   {
     // find the first char which has a different TokenType compared to begin
     // will assume we have enough space for each string in a_tkz->array
+    // this is using a "sliding window" technique
     int str_idx = 0;
     TokenType begin_t = _get_token_type(*begin);
 
     char *end = begin;
     for (; _get_token_type(*end) == begin_t; ++end)
     {
-      a_tkz->array[arr_idx][str_idx++] = *end;
+      if ((*begin != *end) && (begin_t == OP))
+      { /*
+         * handles ")+", "+(", "-+", ... etc
+         * in such cases, ")" is a string, "+" is another string,
+         * so fill in *begin and *end separately
+         * This is a hard-coded solution, not optimal */
+        a_tkz->array[arr_idx][0] = *begin;
+        a_tkz->array[arr_idx][1] = '\0';
+
+        arr_idx += 1;
+
+        a_tkz->array[arr_idx][0] = *end;
+        a_tkz->array[arr_idx][1] = '\0';
+      }
+      else
+      {
+        a_tkz->array[arr_idx][str_idx++] = *end;
+      }
     }
     a_tkz->array[arr_idx][str_idx] = '\0';
-    arr_idx += 1;
+    ++arr_idx;
 
-    // begin the next iteration from old end
+    // begin next iteration from old end
     begin = end;
   }
   a_tkz->n_tokens = arr_idx;
@@ -158,4 +177,9 @@ static TokenType _get_token_type(char ch)
     return OP;
   }
   return INVALID;
+}
+
+static inline bool _is_bin_op(char ch)
+{ // check if ch is '+', '-', '*', '/', '%'
+  return (ch == '+') || (ch == '-') || (ch == '*') || (ch == '/') || (ch == '%');
 }
