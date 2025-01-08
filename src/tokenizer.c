@@ -4,7 +4,7 @@
 char validTokens[256] = {'\0'};
 
 static int _raw_length(char const *raw);
-static void _update_tokens_and_n_tokens(Tokenizer *a_tkz);
+static void _update_tokens_and_numchar(Tokenizer *a_tkz);
 static void _array_fillin(Tokenizer *a_tkz);
 static void _init_validTokens();
 static TokenType _get_token_type(char ch);
@@ -16,20 +16,21 @@ Tokenizer init_tokenizer(char const *raw)
       .raw = raw,
       .length = _raw_length(raw),
       .tokens = NULL,
+      .numchar = 0,
       .n_tokens = 0};
 }
 
 void tokenize(Tokenizer *a_tkz)
-{ // fill in tokens, n_tokens, and array fields
+{ // fill in tokens, numchar, and array fields
   assert(a_tkz);
 
   // assume len(tokens) <= len(raw)
   a_tkz->tokens = malloc(sizeof(*(a_tkz->tokens)) * a_tkz->length);
-  // count number of tokens in raw and update n_tokens
-  _update_tokens_and_n_tokens(a_tkz);
+  // count number of tokens in raw and update numchar
+  _update_tokens_and_numchar(a_tkz);
 
   // fill in array
-  a_tkz->array = malloc(sizeof(*(a_tkz->array)) * a_tkz->n_tokens);
+  a_tkz->array = malloc(sizeof(*(a_tkz->array)) * a_tkz->numchar);
   _array_fillin(a_tkz);
 }
 
@@ -95,23 +96,24 @@ static int _raw_length(char const *raw)
   return -1;
 }
 
-static void _update_tokens_and_n_tokens(Tokenizer *a_tkz)
+static void _update_tokens_and_numchar(Tokenizer *a_tkz)
 {
   for (char const *a_ch = a_tkz->raw; *a_ch != ';' && *a_ch != '\0'; a_ch += 1)
   {
-    assert(a_tkz->n_tokens < a_tkz->length);
+    assert(a_tkz->numchar < a_tkz->length);
     int index = *a_ch;
     if (validTokens[index] != '\0')
     {
-      a_tkz->tokens[a_tkz->n_tokens] = *a_ch;
-      a_tkz->n_tokens += 1;
+      a_tkz->tokens[a_tkz->numchar] = *a_ch;
+      a_tkz->numchar += 1;
     }
   }
-  a_tkz->tokens[a_tkz->n_tokens + 1] = '\0';
+  a_tkz->tokens[a_tkz->numchar + 1] = '\0';
 }
 
 static void _array_fillin(Tokenizer *a_tkz)
 { // fill in array for all tokens (each element is a string (char *))
+  // also update n_tokens
   if (!a_tkz->array)
   {
     fprintf(stderr, "a_tkz->array is not alloc'd\n");
@@ -124,14 +126,15 @@ static void _array_fillin(Tokenizer *a_tkz)
     // find the first char which has a different TokenType compared to begin
     // will assume we have enough space for each string in a_tkz->array
     int str_idx = 0;
-    TokenType begin_t = _get_token_type(begin);
-    for (char *end = begin + 1; _get_token_type(end) == begin_t; ++end)
+    TokenType begin_t = _get_token_type(*begin);
+    for (char *end = begin + 1; _get_token_type(*end) == begin_t; ++end)
     {
       a_tkz->array[arr_idx][str_idx] = *end;
     }
     a_tkz->array[arr_idx][str_idx + 1] = '\0';
     ++arr_idx;
   }
+  a_tkz->n_tokens = arr_idx + 1;
 }
 
 static TokenType _get_token_type(char ch)

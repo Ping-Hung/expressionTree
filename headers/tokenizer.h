@@ -32,8 +32,9 @@ typedef struct
   char const *raw;
   int length;
   char *tokens;
-  int n_tokens;
+  int numchar;
   TokensStr *array;
+  int n_tokens;
 } Tokenizer;
 
 Tokenizer init_tokenizer(char const *raw);

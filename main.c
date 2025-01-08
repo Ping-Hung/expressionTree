@@ -67,18 +67,23 @@ static void _print_tkz(Tokenizer *a_tkz)
         printf("{ \n");
         printf(" raw == %s", a_tkz->raw); // raw should include a newline
         printf(" length == %d\n", a_tkz->length);
-        _print_tokens(a_tkz->tokens, a_tkz->n_tokens);
+        _print_tokens(a_tkz->tokens, a_tkz->numchar);
+        printf("numchar == %d\n", a_tkz->numchar);
         printf(" n_tokens == %d\n", a_tkz->n_tokens);
+        for (int i = 0; i < a_tkz->n_tokens; ++i)
+        {
+            printf("array[%d] == %s\n", i, a_tkz->array[i]);
+        }
         printf("}\n");
     }
 }
 
-static void _print_tokens(char *tokens, int n_tokens)
+static void _print_tokens(char *tokens, int numchar)
 {
     if (tokens)
     {
         printf(" tokens == ");
-        for (int i = 0; i < n_tokens; ++i)
+        for (int i = 0; i < numchar; ++i)
         {
             printf("%c", tokens[i]);
         }
