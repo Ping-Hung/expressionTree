@@ -108,7 +108,7 @@ static void _update_tokens_and_numchar(Tokenizer *a_tkz)
       a_tkz->numchar += 1;
     }
   }
-  a_tkz->tokens[a_tkz->numchar + 1] = '\0';
+  a_tkz->tokens[a_tkz->numchar] = '\0';
 }
 
 static void _array_fillin(Tokenizer *a_tkz)
@@ -121,20 +121,26 @@ static void _array_fillin(Tokenizer *a_tkz)
   }
 
   int arr_idx = 0;
-  for (char *begin = a_tkz->tokens; *begin != '\0'; ++begin)
+  char *begin = a_tkz->tokens;
+  while (*begin != '\0')
   {
     // find the first char which has a different TokenType compared to begin
     // will assume we have enough space for each string in a_tkz->array
     int str_idx = 0;
     TokenType begin_t = _get_token_type(*begin);
-    for (char *end = begin + 1; _get_token_type(*end) == begin_t; ++end)
+
+    char *end = begin;
+    for (; _get_token_type(*end) == begin_t; ++end)
     {
-      a_tkz->array[arr_idx][str_idx] = *end;
+      a_tkz->array[arr_idx][str_idx++] = *end;
     }
-    a_tkz->array[arr_idx][str_idx + 1] = '\0';
-    ++arr_idx;
+    a_tkz->array[arr_idx][str_idx] = '\0';
+    arr_idx += 1;
+
+    // begin the next iteration from old end
+    begin = end;
   }
-  a_tkz->n_tokens = arr_idx + 1;
+  a_tkz->n_tokens = arr_idx;
 }
 
 static TokenType _get_token_type(char ch)
