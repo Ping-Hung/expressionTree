@@ -122,14 +122,15 @@ static void _array_fillin(Tokenizer *a_tkz)
   for (char *begin = a_tkz->tokens; *begin != '\0'; ++begin)
   {
     // find the first char which has a different TokenType compared to begin
-    char *end = begin + 1;
-    if (*end == '\0')
+    // will assume we have enough space for each string in a_tkz->array
+    int str_idx = 0;
+    TokenType begin_t = _get_token_type(begin);
+    for (char *end = begin + 1; _get_token_type(end) == begin_t; ++end)
     {
-      break;
+      a_tkz->array[arr_idx][str_idx] = *end;
     }
-    while (_get_token_type(*begin) == _get_token_type(*end))
-    {
-    }
+    a_tkz->array[arr_idx][str_idx + 1] = '\0';
+    ++arr_idx;
   }
 }
 
