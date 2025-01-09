@@ -141,12 +141,9 @@ static void _array_fillin(Tokenizer *a_tkz)
          * so fill in *begin and *end separately
          * This is a hard-coded solution, not optimal */
 
-        // TODO: fix this for cases like a - (b + 5) / (c + d)
-        a_tkz->array[arr_idx][0] = *begin;
-        a_tkz->array[arr_idx][1] = '\0';
-
+        // ! This method failed for cases like a - (b + 5) / (c + d)
+        // TODO: fix this
         arr_idx += 1;
-
         a_tkz->array[arr_idx][0] = *end;
         a_tkz->array[arr_idx][1] = '\0';
       }
