@@ -134,23 +134,7 @@ static void _array_fillin(Tokenizer *a_tkz)
     char *end = begin;
     for (; _get_token_type(*end) == begin_t; ++end)
     {
-      if ((*begin != *end) && (begin_t == OP))
-      { /*
-         * handles ")+", "+(", "-+", ... etc
-         * in such cases, ")" is a string, "+" is another string,
-         * so fill in *begin and *end separately
-         * This is a hard-coded solution, not optimal */
-
-        // ! This method failed for cases like a - (b + 5) / (c + d)
-        // TODO: fix this
-        arr_idx += 1;
-        a_tkz->array[arr_idx][0] = *end;
-        a_tkz->array[arr_idx][1] = '\0';
-      }
-      else
-      {
-        a_tkz->array[arr_idx][str_idx++] = *end;
-      }
+      a_tkz->array[arr_idx][str_idx++] = *end;
     }
     a_tkz->array[arr_idx][str_idx] = '\0';
     ++arr_idx;

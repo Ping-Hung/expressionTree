@@ -47,6 +47,7 @@ int main(int argc, char *argv[])
     Tokenizer tkz = init_tokenizer(str);
     tokenize(&tkz);
     _print_tkz(&tkz);
+
     // build expressionTree
 
     // verify expressionTree
