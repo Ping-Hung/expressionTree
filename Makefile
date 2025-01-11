@@ -1,5 +1,5 @@
 CC = gcc
-FLAGS = -std=c11 -Wall -Wvla -pedantic -g
+FLAGS = -std=c17 -Wall -Wvla -pedantic -g
 SRC = src/*.c
 HEADERS = headers/*.h
 MAIN = main.c

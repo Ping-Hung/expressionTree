@@ -129,7 +129,6 @@ static void _array_fillin(Tokenizer *a_tkz)
   {
     // find the first char which has a different TokenType compared to begin
     // will assume we have enough space for each string in a_tkz->array
-    int str_idx = 0;
     TokenType begin_t = _get_token_type(*begin);
 
     // "sliding window": use begin and end pointers to mark the start and end of the (sub)string to be copied
