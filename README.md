@@ -12,18 +12,17 @@ Assume `gcc` and `Make` are available on the machine.
 
 ## Rules Summary
 
-**Simple Build**
-`  make`
+### Simple Build
+`make`
 
-**Build Then Execute**
+### Build Then Execute
 
-`  make test`
-**Build, Test, Execute + Check Memory Fault**
+`make test`
+### Build, Test, Execute + Check Memory Fault
+- assume ` valgrind` is installed on machine
 
-assume ` valgrind` is installed on machine
-
-`   make valgrind`
-**Remove Executable** 
+`make valgrind`
+### Remove Executable
 
 ` make clean`
 
