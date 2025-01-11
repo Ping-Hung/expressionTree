@@ -12,7 +12,7 @@ test: $(EXECUTABLE) $(SRC) $(MAIN)
 	./$(EXECUTABLE)
 
 valgrind: $(EXECUTABLE) $(SRC) $(MAIN) 
-	valgrind ./$(EXECUTABLE)
+	valgrind ./$(EXECUTABLE) -s --track-origins=yes 
 
 clean:
 	rm -f $(EXECUTABLE)

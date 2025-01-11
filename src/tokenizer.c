@@ -9,6 +9,7 @@ static void _array_fillin(Tokenizer *a_tkz);
 static void _init_validTokens();
 static TokenType _get_token_type(char ch);
 static inline bool _is_bin_op(char ch);
+static void _write_to_buffer(char *dest, char *src, int n_char);
 
 Tokenizer init_tokenizer(char const *raw)
 {
@@ -99,6 +100,7 @@ static int _raw_length(char const *raw)
 
 static void _update_tokens_and_numchar(Tokenizer *a_tkz)
 {
+  // * This function mostly remove white spaces from raw
   for (char const *a_ch = a_tkz->raw; *a_ch != ';' && *a_ch != '\0'; a_ch += 1)
   {
     assert(a_tkz->numchar < a_tkz->length);
@@ -127,16 +129,25 @@ static void _array_fillin(Tokenizer *a_tkz)
   {
     // find the first char which has a different TokenType compared to begin
     // will assume we have enough space for each string in a_tkz->array
-    // this is using a "sliding window" technique
     int str_idx = 0;
     TokenType begin_t = _get_token_type(*begin);
 
-    char *end = begin;
-    for (; _get_token_type(*end) == begin_t; ++end)
+    // "sliding window": use begin and end pointers to mark the start and end of the (sub)string to be copied
+    char *end = begin + 1;
+    while (_get_token_type(*end) == begin_t)
     {
-      a_tkz->array[arr_idx][str_idx++] = *end;
+      if (begin_t == OP && (*end != *begin))
+      {
+        break;
+      }
+      ++end;
     }
-    a_tkz->array[arr_idx][str_idx] = '\0';
+
+    // once begin and end are marked, fill in array[arr_idx]
+    int n_char = end - begin;
+    _write_to_buffer(a_tkz->array[arr_idx], begin, n_char);
+    a_tkz->array[arr_idx][n_char] = '\0';
+
     ++arr_idx;
 
     // begin next iteration from old end
@@ -160,6 +171,16 @@ static TokenType _get_token_type(char ch)
     return OP;
   }
   return INVALID;
+}
+
+static void _write_to_buffer(char *dest, char *src, int n_char)
+{ // * note that n_char shouldn't include '\0'
+  assert(dest);
+  assert(src);
+  for (int i = 0; i < n_char; ++i)
+  {
+    dest[i] = src[i];
+  }
 }
 
 static inline bool _is_bin_op(char ch)
