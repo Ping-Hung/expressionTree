@@ -19,11 +19,11 @@ Assume `gcc` and `Make` are available on the machine.
 
 `  make test`
 **Build, Test, Execute + Check Memory Fault**
+assume ` valgrind` is installed on machine
 
-- assume ` valgrind` is installed on machine
-  `   make valgrind`
-  **Remove Executable**
-  ` make clean`
+`   make valgrind`
+**Remove Executable** 
+` make clean`
 
 # Comments
 
