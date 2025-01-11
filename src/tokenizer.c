@@ -10,6 +10,7 @@ static void _init_validTokens();
 static TokenType _get_token_type(char ch);
 static inline bool _is_bin_op(char ch);
 static void _write_to_buffer(char *dest, char *src, int n_char);
+static bool _is_increment_or_decrement(char begin, char end);
 
 Tokenizer init_tokenizer(char const *raw)
 {
@@ -135,7 +136,7 @@ static void _array_fillin(Tokenizer *a_tkz)
     char *end = begin + 1;
     while (_get_token_type(*end) == begin_t)
     {
-      if (begin_t == OP && (*end != *begin))
+      if (begin_t == OP && !_is_increment_or_decrement(*begin, *end))
       {
         break;
       }
@@ -180,6 +181,15 @@ static void _write_to_buffer(char *dest, char *src, int n_char)
   {
     dest[i] = src[i];
   }
+}
+
+static bool _is_increment_or_decrement(char begin, char end)
+{
+  if (_is_bin_op(begin) && _is_bin_op(end))
+  {
+    return ((begin == '+') && (end == '+')) || ((begin == '-') && (end == '-'));
+  }
+  return false;
 }
 
 static inline bool _is_bin_op(char ch)
