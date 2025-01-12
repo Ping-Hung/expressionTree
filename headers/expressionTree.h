@@ -9,6 +9,6 @@ typedef struct _ExpressionTreeNode
     struct _ExpressionTreeNode *right;
 } ExpressionTreeNode;
 
-ExpressionTreeNode *build_tree_from_string(Tokenizer *a_tkz, int index);
+ExpressionTreeNode *build_tree(Tokenizer *a_tkz, int index);
 
 #endif
