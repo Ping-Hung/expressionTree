@@ -7,17 +7,9 @@
 inline bool _is_op(TokensStr str);
 
 ExpressionTreeNode *build_tree(TokensStr *array, int start, int end)
-{
+{ // * Look into "shunting-yard algorithm" by Dijkstra
     assert(array);
-    /*
-     * Algorithm outline:
-     * 1. find binary operator and build a ExpressionTreeNode
-     * 2. define the left subtree region in the array and the right subtree region of the array
-     * 3. attach the left and right subtree onto the "BinOPNode" (recursively) */
-    if (start >= end)
-    {
-        return NULL;
-    }
+    return NULL;
 }
 
 inline bool _is_op(TokensStr str)
