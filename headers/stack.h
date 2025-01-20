@@ -11,7 +11,8 @@ typedef struct _sf
 } StackFrame;
 
 bool is_empty(StackFrame *a_stack);
-void push(StackFrame *a_stack, void *content);
-void *pop(StackFrame *a_stack);
+void push(StackFrame **a_stack, void *content);
+void *get_top(StackFrame *a_stack);
+void pop(StackFrame **a_stack);
 
 #endif
