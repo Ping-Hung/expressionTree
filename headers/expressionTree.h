@@ -1,20 +1,7 @@
 #ifndef __EXPRESSIONTREE_H__
 #define __EXPRESSIONTREE_H__
 #include "tokenizer.h"
-
-typedef enum
-{
-    ADDMINUS     = 1,
-    MULTDIV      = 2,
-    LEFTPARENTH  = 3,
-    RIGHTPARENTH = 4
-} Precedence;
-
-typedef struct
-{
-    char operator;
-    Precedence pre;
-} OperatorState;
+#include "stack.h"
 
 typedef struct _ExpressionTreeNode
 {
@@ -23,6 +10,8 @@ typedef struct _ExpressionTreeNode
     struct _ExpressionTreeNode *right;
 } ExpressionTreeNode;
 
-ExpressionTreeNode *build_tree(TokensStr *array, int start, int end);
+ExpressionTreeNode *create_leaf_node(TokensStr content);
+ExpressionTreeNode *create_internal_node(TokensStr content, ExpressionTreeNode *left, ExpressionTreeNode *right);
+ExpressionTreeNode *build_tree(TokensStr *array, int n_tokens);
 
 #endif
