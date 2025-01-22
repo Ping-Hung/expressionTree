@@ -11,6 +11,7 @@
 static void _print_tkz(Tokenizer *a_tkz);
 static void _print_tokens(char *tokens, int n_tokens);
 static bool _valid_expr_format(char *str);
+static void _free_list(StackFrame **a_list);
 
 int main(int argc, char *argv[])
 {
@@ -49,11 +50,22 @@ int main(int argc, char *argv[])
     _print_tkz(&tkz);
 
     // build expressionTree
+    StackFrame *output = NULL;
+    StackFrame *operator_stack = NULL;
+    build_tree(tkz.array, tkz.n_tokens, operator_stack, output);
 
     // verify expressionTree
 
     // free tzk
     destroy_tokenizer(&tkz);
+
+    // free stacks
+    if (!operator_stack) {
+        _free_list(&operator_stack);
+    }
+    if (!output) {
+        _free_list(&operator_stack);
+    }
 
     // free expressionTree
 
@@ -103,4 +115,15 @@ static bool _valid_expr_format(char *str)
         fprintf(stderr, "expression %s is not terminated with \";\"\n", str);
     }
     return is_valid;
+}
+
+static void _free_list(StackFrame **a_list)
+{
+    while (*a_list != NULL)
+    {
+
+        StackFrame *victim = *a_list;
+        *a_list = (*a_list)->next;
+        free(victim);
+    }
 }

@@ -46,15 +46,13 @@ ExpressionTreeNode *create_internal_node(TokensStr content, ExpressionTreeNode *
 }
 
 // side note: TokenStr <=> char [256] ---maybe I should've stayed with good old char * instead of smart assing myself
-ExpressionTreeNode *build_tree(TokensStr *array, int n_tokens)
+ExpressionTreeNode *build_tree(TokensStr *array, int n_tokens, StackFrame *operator_stack, StackFrame *output)
 { /*  Modified "shunting-yard algorithm" suggested by ChatGPT */
+    // stacks should be passed in as parameters, free them separately after this function
     assert(array);
 
     // setup for the algorithm
     _init_precedenceTable();
-    // two stacks required for the algorithm
-    StackFrame *operator_stack = NULL;
-    StackFrame *output = NULL;
 
     // examine each token in array
     for (size_t i = 0; i < n_tokens; ++i)
@@ -138,7 +136,7 @@ static void _copy_str(char *dest, char *src)
     int i = 0;
     for (char *a_char = src; *a_char != '\0'; ++a_char)
     {
-        dest[i] = *a_char;
+        dest[i++] = *a_char;
     }
-    dest[i + 1] = '\0';
+    dest[i] = '\0';
 }

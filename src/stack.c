@@ -1,9 +1,9 @@
 #include "../headers/stack.h"
 #include <stdio.h>
 
-bool is_empty(StackFrame *a_stack)
+bool is_empty(StackFrame *stack)
 {
-  return a_stack == NULL;
+  return stack == NULL;
 }
 
 void push(StackFrame **a_stack, void *content)
@@ -13,11 +13,11 @@ void push(StackFrame **a_stack, void *content)
   *a_stack = new_frame;
 }
 
-void *get_top(StackFrame *a_stack)
+void *get_top(StackFrame *stack)
 {
-  if (!is_empty(a_stack))
+  if (!is_empty(stack))
   {
-    return a_stack->content;
+    return stack->content;
   }
   fprintf(stderr, "%s:%s: trying to get top of an empty stack\n", __FILE__, __func__);
   return NULL;
