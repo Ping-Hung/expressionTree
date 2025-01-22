@@ -12,6 +12,6 @@ typedef struct _ExpressionTreeNode
 
 ExpressionTreeNode *create_leaf_node(TokensStr content);
 ExpressionTreeNode *create_internal_node(TokensStr content, ExpressionTreeNode *left, ExpressionTreeNode *right);
-ExpressionTreeNode *build_tree(TokensStr *array, int n_tokens, StackFrame *operator_stack, StackFrame *output);
+ExpressionTreeNode *build_tree(TokensStr *array, int n_tokens);
 
 #endif

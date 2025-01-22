@@ -8,9 +8,10 @@
 /*An LUT to look up precendence of operator in constant time. Default all values to -1 */
 int8_t precedanceTable[256] = {-1};
 
-inline bool _is_op(TokensStr str);
-inline void _init_precedenceTable();
+static inline bool _is_op(TokensStr str);
+static inline void _init_precedenceTable();
 static void _copy_str(char *dest, char *src);
+static void _free_list(StackFrame **a_list);
 
 ExpressionTreeNode *create_leaf_node(TokensStr content)
 {
@@ -46,37 +47,39 @@ ExpressionTreeNode *create_internal_node(TokensStr content, ExpressionTreeNode *
 }
 
 // side note: TokenStr <=> char [256] ---maybe I should've stayed with good old char * instead of smart assing myself
-ExpressionTreeNode *build_tree(TokensStr *array, int n_tokens, StackFrame *operator_stack, StackFrame *output)
+ExpressionTreeNode *build_tree(TokensStr *array, int n_tokens)
 { /*  Modified "shunting-yard algorithm" suggested by ChatGPT */
     // stacks should be passed in as parameters, free them separately after this function
     assert(array);
 
     // setup for the algorithm
     _init_precedenceTable();
+    StackFrame *output = NULL;
+    StackFrame *operator_stack = NULL;
 
     // examine each token in array
     for (size_t i = 0; i < n_tokens; ++i)
     {
-        TokensStr *token = array[i];
+        char *token = array[i];
 
-        if (_is_op(*token))
+        if (_is_op(token))
         {
             // While the operator at the top of the operator stack has higher or equal precedence than token
             // pop two nodes from the output stack to form the left and right children of a new
             // ExpressionTreeNode
-            while (!is_empty(&operator_stack))
+            while (!is_empty(operator_stack))
             {
-                TokensStr *top = get_top(&operator_stack); // reminder: top is of type char[1024]
+                char *top = get_top(operator_stack); // reminder: top is of type char[1024]
                 if (precedanceTable[(int)(*top)] >= precedanceTable[(int)(*token)])
                 {
                     pop(&operator_stack);
 
-                    ExpressionTreeNode *right = get_top(&output);
+                    ExpressionTreeNode *right = get_top(output);
                     pop(&output);
-                    ExpressionTreeNode *left = get_top(&output);
+                    ExpressionTreeNode *left = get_top(output);
                     pop(&output);
 
-                    push(&output, create_internal_node(*top, left, right));
+                    push(&output, create_internal_node(top, left, right));
                 }
             }
             push(&operator_stack, token);
@@ -85,31 +88,40 @@ ExpressionTreeNode *build_tree(TokensStr *array, int n_tokens, StackFrame *opera
         { // gettting VARiables and LITerals
             /*  based on the design of tokenizer, if the first char in str is a number, the entire string is a number
                 likewise for variables */
-            push(&output, create_leaf_node(*token));
+            push(&output, create_leaf_node(token));
             // should ensure the contents output are all ExpressionTreeNode malloc'd
         }
     }
 
     // building the entire tree
-    while (!is_empty(&operator_stack))
+    while (!is_empty(operator_stack))
     {
-        TokensStr *top = get_top(&operator_stack);
+        TokensStr *top = get_top(operator_stack);
         pop(&operator_stack);
 
-        ExpressionTreeNode *right = get_top(&output);
+        ExpressionTreeNode *right = get_top(output);
         pop(&output);
-        ExpressionTreeNode *left = get_top(&output);
+        ExpressionTreeNode *left = get_top(output);
         pop(&output);
 
         push(&output, create_internal_node(*top, left, right));
     }
 
     // it's garaunteed that one last treenode will be present on the output stack when the routine finishes
-    ExpressionTreeNode *root = get_top(&output);
+    ExpressionTreeNode *root = get_top(output);
+    if (!operator_stack)
+    {
+        _free_list(&operator_stack);
+    }
+    if (!output)
+    {
+        _free_list(&output);
+    }
+
     return root;
 }
 
-inline bool _is_op(TokensStr str)
+static inline bool _is_op(TokensStr str)
 {
     if (strlen(str) == 1)
     {
@@ -118,7 +130,7 @@ inline bool _is_op(TokensStr str)
     return false;
 }
 
-inline void _init_precedenceTable()
+static inline void _init_precedenceTable()
 {
     // higher the precendence, the sooner the evaluation
     precedanceTable[(int)'+'] = 1;
@@ -139,4 +151,15 @@ static void _copy_str(char *dest, char *src)
         dest[i++] = *a_char;
     }
     dest[i] = '\0';
+}
+
+static void _free_list(StackFrame **a_list)
+{
+    while (*a_list != NULL)
+    {
+
+        StackFrame *victim = *a_list;
+        *a_list = (*a_list)->next;
+        free(victim);
+    }
 }
