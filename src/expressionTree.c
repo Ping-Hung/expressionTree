@@ -16,6 +16,11 @@ ExpressionTreeNode *create_leaf_node(TokensStr content)
 {
     // must ensure content is a literal, else wrong
     ExpressionTreeNode *leaf = malloc(sizeof(*leaf));
+    if (!leaf)
+    {
+        fprintf(stderr, "%s:%s: malloc failed\n", __FILE__, __func__);
+        return NULL;
+    }
     _copy_str(leaf->content, content);
     leaf->left = NULL;
     leaf->right = NULL;
@@ -67,13 +72,16 @@ ExpressionTreeNode *build_tree(TokensStr *array, int n_tokens)
                 if (precedanceTable[(int)(*top)] >= precedanceTable[(int)(*token)])
                 {
                     pop(&operator_stack);
-                    ExpressionTreeNode *left = get_top(&output);
+
                     ExpressionTreeNode *right = get_top(&output);
                     pop(&output);
+                    ExpressionTreeNode *left = get_top(&output);
                     pop(&output);
-                    create_internal_node(*top, left, right);
+
+                    push(&output, create_internal_node(*top, left, right));
                 }
             }
+            push(&operator_stack, token);
         }
         else
         { // gettting VARiables and LITerals
@@ -84,7 +92,23 @@ ExpressionTreeNode *build_tree(TokensStr *array, int n_tokens)
         }
     }
 
-    return NULL;
+    // building the entire tree
+    while (!is_empty(&operator_stack))
+    {
+        TokensStr *top = get_top(&operator_stack);
+        pop(&operator_stack);
+
+        ExpressionTreeNode *right = get_top(&output);
+        pop(&output);
+        ExpressionTreeNode *left = get_top(&output);
+        pop(&output);
+
+        push(&output, create_internal_node(*top, left, right));
+    }
+
+    // it's garaunteed that one last treenode will be present on the output stack when the routine finishes
+    ExpressionTreeNode *root = get_top(&output);
+    return root;
 }
 
 inline bool _is_op(TokensStr str)
