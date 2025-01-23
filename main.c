@@ -11,6 +11,7 @@
 static void _print_tkz(Tokenizer *a_tkz);
 static void _print_tokens(char *tokens, int n_tokens);
 static bool _valid_expr_format(char *str);
+static void _free_expressionTree(ExpressionTreeNode **a_root);
 
 int main(int argc, char *argv[])
 {
@@ -49,14 +50,26 @@ int main(int argc, char *argv[])
     _print_tkz(&tkz);
 
     // build expressionTree
-    build_tree(tkz.array, tkz.n_tokens);
+    ExpressionTreeNode *root = build_tree(tkz.array, tkz.n_tokens);
 
     // verify expressionTree
+    assert(root);
+    FILE *fp = fopen("parseTree.txt", "w");
+    if (fp)
+    {
+        _print_tree(root, fp, 0);
+        fclose(fp);
+    }
+    else
+    {
+        fprintf(stderr, "failed to open file parseTree.txt\n");
+    }
 
     // free tzk
     destroy_tokenizer(&tkz);
 
     // free expressionTree
+    _free_expressionTree(&root);
 
     return EXIT_SUCCESS;
 }
@@ -104,4 +117,15 @@ static bool _valid_expr_format(char *str)
         fprintf(stderr, "expression %s is not terminated with \";\"\n", str);
     }
     return is_valid;
+}
+
+static void _free_expressionTree(ExpressionTreeNode **a_root)
+{
+    assert(a_root);
+    if (*a_root)
+    {
+        _free_expressionTree(&((*a_root)->left));
+        _free_expressionTree(&((*a_root)->right));
+        free(*a_root);
+    }
 }
