@@ -109,11 +109,11 @@ ExpressionTreeNode *build_tree(TokensStr *array, int n_tokens)
 
     // it's garaunteed that one last treenode will be present on the output stack when the routine finishes
     ExpressionTreeNode *root = get_top(output);
-    if (!operator_stack)
+    if (operator_stack)
     {
         _free_list(&operator_stack);
     }
-    if (!output)
+    if (output)
     {
         _free_list(&output);
     }

@@ -12,6 +12,7 @@ static void _print_tkz(Tokenizer *a_tkz);
 static void _print_tokens(char *tokens, int n_tokens);
 static bool _valid_expr_format(char *str);
 static void _free_expressionTree(ExpressionTreeNode **a_root);
+static void _print_tree(ExpressionTreeNode *root, FILE *fp, int depth);
 
 int main(int argc, char *argv[])
 {
@@ -59,6 +60,7 @@ int main(int argc, char *argv[])
     {
         _print_tree(root, fp, 0);
         fclose(fp);
+        fprintf(stdout, "tree successfully printed to parseTree.txt\n");
     }
     else
     {
@@ -127,5 +129,20 @@ static void _free_expressionTree(ExpressionTreeNode **a_root)
         _free_expressionTree(&((*a_root)->left));
         _free_expressionTree(&((*a_root)->right));
         free(*a_root);
+    }
+}
+
+static void _print_tree(ExpressionTreeNode *root, FILE *fp, int depth)
+{
+    // print tree pointed to by root onto fp
+    if (root)
+    {
+        for (int i = 0; i < depth; ++i)
+        {
+            fprintf(fp, "  ");
+        }
+        fprintf(fp, "%s\n", root->content);
+        _print_tree(root->left, fp, depth + 1);
+        _print_tree(root->right, fp, depth + 1);
     }
 }

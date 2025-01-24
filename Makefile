@@ -12,7 +12,7 @@ test: $(EXECUTABLE) $(SRC) $(MAIN)
 	./$(EXECUTABLE)
 
 valgrind: $(EXECUTABLE) $(SRC) $(MAIN) 
-	valgrind ./$(EXECUTABLE) -s --track-origins=yes 
+	valgrind -s --leak-check=full --track-origins=yes ./$(EXECUTABLE)  
 
 clean:
 	rm -f $(EXECUTABLE)
