@@ -14,21 +14,29 @@ Assume `gcc` and `Make` are available on the machine.
 
 ### Simple Build
 
-`make`
+```
+  make
+```
 
 ### Build Then Execute
 
-`make test`
+```
+  make test
+```
 
 ### Build, Test, Execute + Check Memory Fault
 
-- assume ` valgrind` is installed on machine
+- assume `valgrind` is installed on machine
 
-`make valgrind`
+```
+  make valgrind
+```
 
 ### Remove Executable
 
-` make clean`
+```
+  make clean
+```
 
 # Tree Building
 
