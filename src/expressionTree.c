@@ -46,12 +46,11 @@ ExpressionTreeNode *create_internal_node(TokensStr content, ExpressionTreeNode *
     return new;
 }
 
-// side note: TokenStr <=> char [256] ---maybe I should've stayed with good old char * instead of smart assing myself
+// side note: TokenStr ⇔ char [1024], so TokenStr * ⇔ char (*)[1024] (address of an array of 1024 char)
 ExpressionTreeNode *build_tree(TokensStr *array, int n_tokens)
-{ /*  Modified "shunting-yard algorithm" suggested by ChatGPT */
-    // stacks should be passed in as parameters, free them separately after this function
+{
+    // Modified "shunting-yard algorithm" suggested by ChatGPT
     assert(array);
-
     // setup for the algorithm
     _init_precedenceTable();
     StackFrame *output = NULL;
@@ -64,9 +63,6 @@ ExpressionTreeNode *build_tree(TokensStr *array, int n_tokens)
 
         if (_is_op(token))
         {
-            // While the operator at the top of the operator stack has higher or equal precedence than token
-            // pop two nodes from the output stack to form the left and right children of a new
-            // ExpressionTreeNode
             while (!is_empty(operator_stack))
             {
                 char *top = get_top(operator_stack); // reminder: top is of type char[1024]
@@ -85,11 +81,9 @@ ExpressionTreeNode *build_tree(TokensStr *array, int n_tokens)
             push(&operator_stack, token);
         }
         else
-        { // gettting VARiables and LITerals
-            /*  based on the design of tokenizer, if the first char in str is a number, the entire string is a number
-                likewise for variables */
+        {
+            // gettting VARiables and LITerals
             push(&output, create_leaf_node(token));
-            // should ensure the contents output are all ExpressionTreeNode malloc'd
         }
     }
 
@@ -133,11 +127,14 @@ static inline bool _is_op(TokensStr str)
 static inline void _init_precedenceTable()
 {
     // higher the precendence, the sooner the evaluation
-    precedanceTable[(int)'+'] = 1;
-    precedanceTable[(int)'-'] = 1;
-    precedanceTable[(int)'*'] = 2;
-    precedanceTable[(int)'/'] = 2;
-    precedanceTable[(int)'%'] = 2;
+    precedanceTable[(int8_t)'+'] = 1;
+    precedanceTable[(int8_t)'-'] = 1;
+    precedanceTable[(int8_t)'*'] = 2;
+    precedanceTable[(int8_t)'/'] = 2;
+    precedanceTable[(int8_t)'%'] = 2;
+
+    precedanceTable[(int8_t)'('] = 0;
+    // note the closing brace ')' is not included in the table
 }
 
 static void _copy_str(char *dest, char *src)
@@ -157,7 +154,6 @@ static void _free_list(StackFrame **a_list)
 {
     while (*a_list != NULL)
     {
-
         StackFrame *victim = *a_list;
         *a_list = (*a_list)->next;
         free(victim);

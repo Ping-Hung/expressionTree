@@ -17,4 +17,4 @@ valgrind: $(EXECUTABLE) $(SRC) $(MAIN)
 clean:
 	rm -f $(EXECUTABLE)
 
-.PHONY: test clean
+.PHONY: test clean valgrind
