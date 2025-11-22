@@ -42,7 +42,7 @@ Assume `gcc` and `Make` are available on the machine.
   make clean
 ```
 
-# Tree Building
+# Tree Building 
 
 - Using the **_shunting yard_** algorithm.
 - Requires stacks: one for operands, another for operators.
