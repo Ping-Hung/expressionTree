@@ -1,177 +1,101 @@
 #include "../headers/tokenizer.h"
 
-// before using validTokens here, initialize it with the null byte
-char validTokens[256] = {'\0'};
-
-static int _raw_length(char const *raw);
-static void _update_tokens_and_numchar(Tokenizer *a_tkz);
-static void _array_fillin(Tokenizer *a_tkz);
-static void _init_validTokens();
-static TokenType _get_token_type(char ch);
-static inline bool _is_bin_op(char ch);
-static void _write_to_buffer(char *dest, char *src, int n_char);
-static bool _is_increment_or_decrement(char begin, char end);
-
-Tokenizer init_tokenizer(char const *raw)
+static inline enum type_t _assign_type(char ch)
 {
-	_init_validTokens();
-	return (Tokenizer){
-			.raw = raw,
-			.length = _raw_length(raw),
-			.tokens = NULL,
-			.numchar = 0,
-			.n_tokens = 0};
+	if (isdigit(ch)) {
+		return TOK_LIT;
+	}
+	if (isalpha(ch)) {
+		return TOK_VAR;
+	}
+	switch (ch) {
+	case '+':
+	case '-':
+	case '*':
+	case '/':
+	case '%':
+		return TOK_OP;
+	default:
+		break;
+	}
+	return TOK_INVALID;
 }
 
-void tokenize(Tokenizer *a_tkz)
-{ // fill in tokens, numchar, and array fields
-	assert(a_tkz);
-
-	// assume len(tokens) <= len(raw)
-	a_tkz->tokens = malloc(sizeof(*(a_tkz->tokens)) * a_tkz->length);
-	// count number of tokens in raw and update numchar
-	_update_tokens_and_numchar(a_tkz);
-
-	// fill in array
-	a_tkz->array = malloc(sizeof(*(a_tkz->array)) * a_tkz->numchar);
-	_array_fillin(a_tkz);
-}
-
-void destroy_tokenizer(Tokenizer *a_tkz)
+Tokenizer tokenizer_tokenize(char const *input, size_t length)
 {
-	assert(a_tkz);
-	if (a_tkz->raw) {
-		free((void *)a_tkz->raw);
-	}
-	if (a_tkz->tokens) {
-		free(a_tkz->tokens);
-	}
-	if (a_tkz->array) {
-		free(a_tkz->array);
-	}
-}
+	assert(input && "argument input must be non-null");
 
-static void _init_validTokens()
-{
-	char operators[] = {'+', '-', '*', '/', '%', '(', ')'};
-	for (int i = 0; i < sizeof(operators) / sizeof(operators[0]); ++i) {
-		int index = operators[i];
-		validTokens[index] = operators[i];
-	}
+	Tokenizer tokenizer = { 0 };
+	// tokenizer.tokens is ought to be Token[length]
+	tokenizer.tokens = malloc(sizeof(*(tokenizer.tokens)) * length);
 
-	// alphabets
-	for (char ch = 'a'; ch <= 'z'; ++ch) {
-		int idx = ch;
-		validTokens[idx] = ch;
-	}
-
-	for (char ch = 'A'; ch <= 'Z'; ++ch) {
-		int idx = ch;
-		validTokens[idx] = ch;
-	}
-
-	// numerics
-	for (char ch = '0'; ch <= '9'; ++ch) {
-		int idx = ch;
-		validTokens[idx] = ch;
-	}
-}
-
-static int _raw_length(char const *raw)
-{
-	// this is not counting the null byte '\0'
-	if (raw) {
-		int len = 0;
-		while (raw[len] != '\0') {
-			len += 1;
+	// use a sliding-window approach to isolate each token from input
+	int i = 0;			// index to the tokens array
+	size_t n_tokens = 0;
+	char const *input_end = &input[length];
+	while (input != input_end) {
+		assert(i < length);
+		// eat white space
+		while (isspace(*input)) {
+			input++;
 		}
-		return len;
-	}
-	return -1;
-}
-
-static void _update_tokens_and_numchar(Tokenizer *a_tkz)
-{
-	// * This function mostly remove white spaces from raw
-	for (char const *a_ch = a_tkz->raw; *a_ch != ';' && *a_ch != '\0'; a_ch += 1) {
-		assert(a_tkz->numchar < a_tkz->length);
-		int index = *a_ch;
-		if (validTokens[index] != '\0') {
-			a_tkz->tokens[a_tkz->numchar] = *a_ch;
-			a_tkz->numchar += 1;
-		}
-	}
-	a_tkz->tokens[a_tkz->numchar] = '\0';
-}
-
-static void _array_fillin(Tokenizer *a_tkz)
-{ // fill in array for all tokens (each element is a string (char *))
-  // also update n_tokens
-	if (!a_tkz->array) {
-		fprintf(stderr, "a_tkz->array is not alloc'd\n");
-		assert(a_tkz->array);
-	}
-
-	int arr_idx = 0;
-	char *begin = a_tkz->tokens;
-	while (*begin != '\0') {
-		// find the first char which has a different TokenType compared to begin
-		// will assume we have enough space for each string in a_tkz->array
-		TokenType begin_t = _get_token_type(*begin);
-
-		// "sliding window": use begin and end pointers to mark the start and end of the (sub)string to be copied
-		char *end = begin + 1;
-		while (_get_token_type(*end) == begin_t) {
-			if (begin_t == OP && !_is_increment_or_decrement(*begin, *end))	
-				break;
-			++end;
+		// classify the first non-whitespace character
+		tokenizer.tokens[i].type = _assign_type(*input);
+		n_tokens += 1;
+		// finding the end of this token (the first character with different type)
+		char const *tok_end = input;
+		while (tok_end != input_end && 
+			_assign_type(*tok_end) == tokenizer.tokens[i].type) {
+			tok_end++;
 		}
 
-		// once begin and end are marked, fill in array[arr_idx]
-		int n_char = end - begin;
-		_write_to_buffer(a_tkz->array[arr_idx], begin, n_char);
-		a_tkz->array[arr_idx][n_char] = '\0';
-
-		++arr_idx;
-
-		// begin next iteration from old end
-		begin = end;
+		tokenizer.tokens[i].token_string = input;
+		tokenizer.tokens[i].length = tok_end - input;
+		
+		// loop update
+		input = tok_end;
+		i++;
 	}
-	a_tkz->n_tokens = arr_idx;
+
+	tokenizer.n_tokens = n_tokens;
+	return tokenizer;
 }
 
-static TokenType _get_token_type(char ch)
+
+
+void tokenizer_display(Tokenizer *a_tkz)
 {
-	if (validTokens[(int)ch] != '\0') {
-		if (isdigit(ch)) {
-			return LIT;
-		}
-		if (isalpha(ch)) {
-			return VAR;
-		}
-		return OP;
+	assert(a_tkz && "parameter a_tkz must be non-NULL");
+
+	char *tok_types[] = {
+		[TOK_VAR] = "variable",
+		[TOK_LIT] = "literal",
+		[TOK_OP] = "operator",
+		[TOK_INVALID] = "invalid"
+	};
+
+	printf("tokenizer:\n");
+	printf("{\n");
+	printf("  .n_tokens: %ld\n", a_tkz->n_tokens);
+
+	for (int i = 0; i < a_tkz->n_tokens; i++) {
+		printf("  .tokens[%d] = {\n", i);
+		// print a_tkz->tokens[i].length characters in a_tkz->tokens[i].token_string
+		printf("  		   .token_string = %.*s\n"
+		       "		   .length	 = %ld\n"
+		       "		   .type 	 = %s\n"
+		       "		}\n",
+		       (int)a_tkz->tokens[i].length, a_tkz->tokens[i].token_string,
+		       a_tkz->tokens[i].length,
+		      tok_types[a_tkz->tokens[i].type]);
 	}
-	return INVALID;
+
+	printf("}\n");
 }
 
-static void _write_to_buffer(char *dest, char *src, int n_char)
-{ // * note that n_char shouldn't include '\0'
-	assert(dest);
-	assert(src);
-	for (int i = 0; i < n_char; ++i) {
-		dest[i] = src[i];
-	}
-}
-
-static bool _is_increment_or_decrement(char begin, char end)
+void tokenizer_distroy(Tokenizer *a_tkz)
 {
-	if (_is_bin_op(begin) && _is_bin_op(end)) {
-		return ((begin == '+') && (end == '+')) || ((begin == '-') && (end == '-'));
-	}
-	return false;
+	assert(a_tkz && "parameter a_tkz must be non-NULL");
+	free(a_tkz->tokens);
 }
 
-static inline bool _is_bin_op(char ch)
-{ // check if ch is '+', '-', '*', '/', '%'
-	return (ch == '+') || (ch == '-') || (ch == '*') || (ch == '/') || (ch == '%');
-}

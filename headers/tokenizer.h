@@ -8,37 +8,36 @@
 #include <stdbool.h>
 #include <ctype.h>
 
-#define MAX_STR_LEN 1024
-/*TokenStr is a "string" type that holds at most 1024 characters (including '\0')*/
-typedef char TokensStr[MAX_STR_LEN];
+// Tokenizer:  
+// 	-  tokens: Token[] := an array of Token
+// 	-  n_tokens: size_t := length of tokens (n_tokens ≤ input_size)
+// Token:
+// 	- token_string: char * := starting address of the token
+// 	- length: size_t := length of the token 
+// 	- type: enum type_t:= what kind of token 
+// 	** want token_string[0...length -  1] to entail all the characters in the actual token
 
-/*There should be 3 kinds of token in this particular project: VARiables, LITerals, OPerators*/
+// only 3 types of valid token: VARiable, LITeral, and OPerator
+enum type_t {
+	TOK_VAR,
+	TOK_LIT,
+	TOK_OP,
+	TOK_INVALID
+};
 
-typedef enum
-{
-  VAR,
-  LIT,
-  OP,
-  INVALID
-} TokenType;
+typedef struct {
+	char const *token_string;
+	size_t length;
+	enum type_t type;
+} Token;
 
-// this should be a LUT (Look Up Table) for all valid tokens
-// use extern so validTokens (global var) is usable (and identical) throughout all files
-// that includes tokenizer.h
-extern char validTokens[256];
-
-typedef struct
-{
-  char const *raw;
-  int length;
-  char *tokens;
-  int numchar;
-  TokensStr *array;
-  int n_tokens;
+typedef struct {
+	Token *tokens;
+	size_t n_tokens;
 } Tokenizer;
 
-Tokenizer init_tokenizer(char const *raw);
-void tokenize(Tokenizer *a_tkz);
-void destroy_tokenizer(Tokenizer *a_tkz);
+Tokenizer tokenizer_tokenize(char const *input, size_t length);
+void tokenizer_display(Tokenizer *a_tkz);
+void tokenizer_distroy(Tokenizer *a_tkz);	// free the tokens array basically
 
 #endif
