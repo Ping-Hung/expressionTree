@@ -59,9 +59,11 @@ Tokenizer tokenizer_tokenize(char const *input, size_t length)
 			break;
 		}
 
-		tokenizer.tokens[i].token_string = input;
-		tokenizer.tokens[i].length = tok_end - input;
-		tokenizer.tokens[i].type = type;
+		tokenizer.tokens[i] = (Token) {
+			.token_string = input,
+			.length = tok_end - input,
+			.type = type
+		};
 
 		// loop update
 		input = tok_end;

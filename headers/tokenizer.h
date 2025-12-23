@@ -8,6 +8,16 @@
 #include <stdbool.h>
 #include <ctype.h>
 
+/*
+ * lexer/tokenizer takes an input character stream and returns a stream of tokens.
+ * - It is done here by labelling substrings of the input stream as one of the
+ *   following type_t and filtering out whitespaces.
+ *
+ * The parser (non-existent unit) will take this stream of tokens and build
+ * structure (ExpresssionTree) based on the "grammatical" rules of computer
+ * arithmetic.
+ */
+
 enum type_t {
 	TOK_VAR,
 	TOK_LIT,
