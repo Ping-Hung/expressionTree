@@ -12,6 +12,8 @@ enum type_t {
 	TOK_VAR,
 	TOK_LIT,
 	TOK_OP,
+	TOK_LPAREN,
+	TOK_RPAREN,
 	TOK_INVALID
 };
 
