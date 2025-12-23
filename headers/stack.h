@@ -6,8 +6,8 @@
 
 // this is just a linked-list, so will access the head by a pointer (address) to the first node
 typedef struct _sf {
-  void *content;
-  struct _sf *next;
+	void *content;
+	struct _sf *next;
 } StackFrame;
 
 bool is_empty(StackFrame *stack);

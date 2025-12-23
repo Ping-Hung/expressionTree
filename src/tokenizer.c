@@ -49,7 +49,7 @@ Tokenizer tokenizer_tokenize(char const *input, size_t length)
 	tokenizer.tokens = malloc(sizeof(*(tokenizer.tokens)) * length);
 
 	// use a sliding-window approach to isolate each token from input
-	int i = 0;			// index to the tokens array
+	int i = 0;	// index of the tokens array
 	size_t n_tokens = 0;
 	char const *input_end = &input[length];
 	while (input != input_end) {
@@ -59,30 +59,33 @@ Tokenizer tokenizer_tokenize(char const *input, size_t length)
 			input++;
 		}
 
-		// classify the first non-whitespace character
 		n_tokens += 1;
 
-		// match until the fist different type
+		/* assign a type to the first non-whitespace char and match
+		 * until the first different char */
 		enum type_t type = _assign_type(*input);
 		char const *tok_end = input + 1;
 		while (tok_end < input_end && _assign_type(*tok_end) == type) {
 			tok_end++;
 		}
 
-		// depending on type, continue matching or end on the spot
+
+		/* depending on the type of the different char, end on the spot
+		 * or continue matching based on rules*/
 		switch (type) {
-		case TOK_OP:
+		case TOK_OP:	/* end on the spot */
 			type = _classify_operator(input, tok_end - input);
 			break;
-		case TOK_VAR:
+		case TOK_VAR:	/* continue matching */
 			{
 				while (tok_end < input_end && 
-				       (_assign_type(*tok_end) == TOK_LIT ||
-				        _assign_type(*tok_end) == TOK_VAR)) {
+				       (_assign_type(*tok_end) == TOK_LIT || 
+					_assign_type(*tok_end) == TOK_VAR)) {
 					tok_end++;
 				}
 			}
-		default:
+			break;
+		default:	/* end on the spot */
 			break;
 		}
 		tokenizer.tokens[i].token_string = input;
@@ -105,9 +108,9 @@ void tokenizer_display(Tokenizer *a_tkz)
 	assert(a_tkz && "parameter a_tkz must be non-NULL");
 
 	char *tok_types[] = {
-		[TOK_VAR] = "variable",
-		[TOK_LIT] = "literal",
-		[TOK_OP] = "operator",
+		[TOK_VAR]     = "variable",
+		[TOK_LIT]     = "literal",
+		[TOK_OP]      = "operator",
 		[TOK_INVALID] = "invalid"
 	};
 

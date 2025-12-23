@@ -26,9 +26,11 @@ typedef struct {
 	enum type_t type;
 } Token;
 
-// Tokenizer:  
-//	-  tokens: Token[] := an array of Token
-//	-  n_tokens: size_t := length of tokens (n_tokens ≤ input_size)
+
+/* Tokenizer:  
+ *	-  tokens: Token[] := an array of Token
+ *	-  n_tokens: size_t := length of tokens (n_tokens ≤ input_size)
+ */
 typedef struct {
 	Token *tokens;
 	size_t n_tokens;
