@@ -26,7 +26,8 @@ Tokenizer tokenizer_tokenize(char const *input, size_t length)
 
 		/* assign a type to the first non-whitespace char and match
 		 * until the first different char. 
-		 * (i.e. expand the "token width" as far as possible) */
+		 * (i.e. expand the "token width" as far as possible) 
+		 */
 		enum type_t type = _assign_type(*input);
 		char const *tok_end = input + 1;
 		while (tok_end < input_end && _assign_type(*tok_end) == type) {
@@ -123,11 +124,7 @@ static inline enum type_t _assign_type(char ch)
 		return TOK_VAR;
 	}
 	switch (ch) {
-	case '+':
-	case '-':
-	case '*':
-	case '/':
-	case '%':
+	case '+': case '-': case '*': case '/': case '%':
 		return TOK_OP;
 	case '(':
 		return TOK_LPAREN;

@@ -11,10 +11,10 @@
 
 // Inspired by https://github.com/PixelRifts/math-expr-evaluator/tree/master
 enum node_type_t {
+	NODE_LPAREN, NODE_RPAREN, NODE_ERROR,	/* they don't correspond to actual node */
+	/* all the following corresponds to actual node in the tree */
 	NODE_LITERAL,	
 	NODE_VARIABLE,  
-	NODE_LPAREN,
-	NODE_RPAREN,
 	NODE_BINARY_ADD,
 	NODE_BINARY_MINUS,
 	NODE_BINARY_MULT,
@@ -22,9 +22,10 @@ enum node_type_t {
 	NODE_BINARY_MOD,
 	NODE_UNARY_INC,
 	NODE_UNARY_DEC,
+	NODE_UNARY_POST_INC,
+	NODE_UNARY_POST_DEC,
 	NODE_UNARY_MINUS,
-	NODE_UNARY_PLUS,
-	NODE_ERROR
+	NODE_UNARY_PLUS
 };
 
 typedef struct Tnode Tnode;
