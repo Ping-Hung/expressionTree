@@ -17,7 +17,7 @@ Tokenizer tokenizer_tokenize(char const *input, size_t length)
 
 	// use a "greedy sliding-window" approach to isolate each token from input
 	// greedy in a sense that each pass of this tokenizing process will consume as many
-	// identical symbols as possible
+	// identically typed symbols as possible
 	int i = 0;	// index of the tokens array
 	size_t n_tokens = 0;
 	char const *input_end = input + length;
