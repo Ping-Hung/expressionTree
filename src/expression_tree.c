@@ -1,50 +1,25 @@
 #include "../headers/ExpressionTree.h"
 
-typedef char precedence_t
-//  Unary('++'|'--') > Unary('+'|'-') > binary('*'|'/'|'%') > binary('+' | '-')
-static precedence_t preced_LUT[] = {
-	// only the precedence of legal operators
-	[NODE_ERROR]        = -1, // this is a "trick" in the hopes to ease programming
-	[NODE_BINARY_ADD]   = 0,
-	[NODE_BINARY_MINUS] = 0,
-	[NODE_BINARY_MULT]  = 1
-	[NODE_BINARY_DIV]   = 1,
-	[NODE_BINARY_MOD]   = 1,
-	[NODE_UNARY_PLUS]   = 2,
-	[NODE_UNARY_MINUS]  = 2,
-	[NODE_UNARY_INC]    = 3,
-	[NODE_UNARY_DEC]    = 3
-};
+typedef char precedence_t;
 
-static precedence_t _get_operator_precedence(Token curr)
-{
-	precedence_t p_type = NODE_ERROR;
-	if (curr.type == TYPE_OP) {
-		if (curr.length == 2) {
-			// unary increment or decrement, have to decide prefix or postfix
-		} else {
-			// binary operations
-			switch (curr.token_string[0]) {
-			case '+': p_type = NODE_BINARY_ADD;   break;  
-			case '-': p_type = NODE_BINARY_MINUS; break;
-			case '*': p_type = NODE_BINARY_MULT;  break;
-			case '/': p_type = NODE_BINARY_DIV;   break;
-			case '%': p_type = NODE_BINARY_MOD;   break;
-			default:
-				  break;
-			}
-		}
-	}
-	return p_type;
-}
+//  Unary('++'|'--') > Unary('+'|'-') > binary('*'|'/'|'%') > binary('+' | '-')
 
 // Regardless of what expr actually looks like, expressiontree_build_tree will
 // assume the rules/conventions of infix mathematical expressions and build a
 // tree according to this grammar
+//
+// Grammar defines how to compose meaningful message from the atoms (basic building blocks) of a language
 
 /* 		   Grammar:	(I guess writing them out gives me a picture of
  *  		   		 how the parsing process goes and what helpers come into
  *  		   		 play, but error handling is not specified in grammar...)
+ *
+ *     		   ops   := TOK_BINARY_ADD | TOK_BINARY_MINUS | TOK_BINARY_MULT |
+ *     		   	    TOK_BINARY_DIV | TOK_BINARY_MOD   | TOK_UNARY_PLUS  | 
+ *     		   	    TOK_UNARY_MINUS| TOK_UNARY_INC    | TOK_UNARY_DEC
+ *		   specialSymbols := TOK_ERROR | TOK_LPAREN | TOK_RPAREN
+ *   		   atoms := TOK_VAR | TOK_LIT
+ *
  *
  */
 
@@ -61,7 +36,6 @@ ExpressionTree expressiontree_build_tree(Token *expr, size_t length)
 		// recursive build left
 
 		// find precedence of valid token expr[i]
-		precedence_t current_precedence = _get_operator_precedence(expr[i]);
 	}
 	return root;
 }
@@ -75,30 +49,5 @@ void expressiontree_destroy_tree(ExpressionTree *root)
 {
 	// freeing tree via a post order tree walk
 	assert(root && "arg root must be a valid ExpressionTree (Tnode *)");
-	if (!root)	return;
-	switch ((*root)->type) {
-	case NODE_BINARY_ADD: 
-	case NODE_BINARY_MINUS: 
-	case NODE_BINARY_MULT: 
-	case NODE_BINARY_DIV: 
-	case NODE_BINARY_MOD: 
-		{
-			expressiontree_destroy_tree(&(*root)->binary.left);
-			expressiontree_destroy_tree(&(*root)->binary.right);
-		}
-		break;
-	case NODE_UNARY_PLUS:
-	case NODE_UNARY_MINUS:
-	case NODE_UNARY_INC:
-	case NODE_UNARY_DEC:
-	case NODE_UNARY_POST_INC:
-	case NODE_UNARY_POST_DEC:
-		expressiontree_destroy_tree(&(*root)->unary.operand);
-		break;
-	default:
-		break;
-	}
-	free(*root);
-	*root = NULL;
 }
 
