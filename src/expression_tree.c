@@ -9,14 +9,13 @@ typedef char precedence_t;
 // tree according to this grammar
 //
 // Grammar defines how to compose meaningful message from the atoms (basic building blocks) of a language
+// a syntax tree is a structure build out of tokens which encodes these grammar rules
 
 /* 		   Grammar:	(I guess writing them out gives me a picture of
  *  		   		 how the parsing process goes and what helpers come into
  *  		   		 play, but error handling is not specified in grammar...)
  *
- *     		   ops   := TOK_BINARY_ADD | TOK_BINARY_MINUS | TOK_BINARY_MULT |
- *     		   	    TOK_BINARY_DIV | TOK_BINARY_MOD   | TOK_UNARY_PLUS  | 
- *     		   	    TOK_UNARY_MINUS| TOK_UNARY_INC    | TOK_UNARY_DEC
+ *     		   ops   := TOK_ADD | TOK_MINUS | TOK_MULT | TOK_DIV | TOK_MOD | TOK_INC | TOK_DEC
  *		   specialSymbols := TOK_ERROR | TOK_LPAREN | TOK_RPAREN
  *   		   atoms := TOK_VAR | TOK_LIT
  *
@@ -27,11 +26,10 @@ ExpressionTree expressiontree_build_tree(Token *expr, size_t length)
 {
 	// loop through token stream expr and build a tree if the expression is valid.
 
-	// consume a TOK_INVALID ⇒  error (found a bad token) ⇒  halt tree build
 	// found a TOK_LPAREN ⇒  following expr.precedence += 1
 	ExpressionTree root = NULL;
+	// TOK_ERROR handling
 	for (int i = 0; i < length - 1; i++) {
-		// TOK_INVALID handling
 
 		// recursive build left
 
