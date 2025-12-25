@@ -24,11 +24,11 @@ void *get_top(StackFrame *stack)
 
 void pop(StackFrame **a_stack)
 {
-	if (!is_empty(*a_stack)) {
-		StackFrame *tmp = *a_stack;
-		*a_stack = (*a_stack)->next;
-		free(tmp);
-	} else {
+	if (is_empty(*a_stack)) {
 		fprintf(stderr, "%s:%s: popping from empty stack", __FILE__, __func__);
+		return;
 	}
+	StackFrame *tmp = *a_stack;
+	*a_stack = (*a_stack)->next;
+	free(tmp);
 }

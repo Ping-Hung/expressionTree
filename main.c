@@ -32,6 +32,9 @@ int main(void)
 		}
 	}
 build:
+	if (isspace(str[input_size - 1])) {
+		str[input_size - 1] = '\0';
+	}
 	fprintf(stdout, "input expression: \"%.*s\"\nlength: %ld\n", 
 		(int)input_size, str, input_size);
 	// tokenize input string
@@ -75,7 +78,7 @@ static long getline(char **lineptr, size_t *buff_size)
 	for (ch = getchar(); ch != '\n' && ch != EOF; ch = getchar()) {
 		if (n_read == *buff_size) {
 			// *lineptr is too small, realloc
-			void *buffer = realloc(*lineptr, sizeof(**lineptr) * (*buff_size) * 2)
+			void *buffer = realloc(*lineptr, sizeof(**lineptr) * (*buff_size) * 2);
 			if (!buffer) {
 				fprintf(stderr, "realloc failed in %s line %d\n",
 						__FILE__, __LINE__ - 2);
@@ -86,9 +89,9 @@ static long getline(char **lineptr, size_t *buff_size)
 			*buff_size *= 2;
 		}
 		(*lineptr)[n_read++] = ch;
-	}
-
+	} 
 	(*lineptr)[n_read] = '\0';
+
 	if (ch == EOF) {
 		return -1;
 	}

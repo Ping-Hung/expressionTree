@@ -142,8 +142,8 @@ static inline Token _group_chars_into_token(char const *start, char const *end)
 {
 	// group as many non-whitespace symbols of the same type into one token as possible
 	assert(start && !isspace(*start) && 
-		"start must be a valid non-whitespace char in the raw expression string");
-	assert(end > start && "expression string begins at start must consist at least one char");
+		"start must be an address of a valid non-whitespace char in the raw expression string");
+	assert(end >= start && "expression string begins at start must consist at least one char");
 
 	char const *tok_end = start;
 	enum tok_type_t start_type = _assign_type(*start);
