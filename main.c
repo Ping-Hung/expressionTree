@@ -1,9 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <string.h>
-#include <stdbool.h>
 #include "headers/tokenizer.h"
+#include "headers/ExpressionTree.h"
 
 static long getline(char **lineptr, size_t *buff_size);
 
@@ -40,8 +36,17 @@ build:
 	// tokenize input string
 	Tokenizer tkz = tokenizer_tokenize(str, input_size);
 
+#ifdef DEBUG
 	tokenizer_display(&tkz);
-
+#endif
+	// parse input string
+	ExpressionTree root = expressiontree_build_tree(tkz.tokens, tkz.n_tokens);
+	if (root) {
+		FILE *fp = fopen("parseTree.txt", "w");
+		expressiontree_print_to_file(fp, root);
+		fclose(fp);
+		expressiontree_destroy_tree(&root);
+	}
 	tokenizer_distroy(&tkz);
 	free(str);
 	return EXIT_SUCCESS;

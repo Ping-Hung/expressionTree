@@ -74,7 +74,7 @@ void tokenizer_display(Tokenizer *a_tkz)
 {
 	assert(a_tkz && "parameter a_tkz must be non-NULL");
 
-	char *tok_types[] = {
+	char const *tok_types[] = {
 		[TOK_VAR]     = "variable",
 		[TOK_LIT]     = "literal",
 		// operators
@@ -147,7 +147,8 @@ static inline Token _group_chars_into_token(char const *start, char const *end)
 
 	char const *tok_end = start;
 	enum tok_type_t start_type = _assign_type(*start);
-	while (tok_end < end && !isspace(*tok_end) && _assign_type(*tok_end) == start_type) {
+	while (tok_end < end && 
+			!isspace(*tok_end) && _assign_type(*tok_end) == start_type) {
 		tok_end++;
 		if (start_type == TOK_LPAREN || start_type == TOK_RPAREN) {
 			break;
@@ -162,8 +163,7 @@ static inline Token _tok_make_var(Token tok, char const *input_end)
 	// TOK_LIT_(TOK_LIT|TOK_VAR), group them into the current token
 	char const *tok_end = tok.token_string + tok.length;
 	while (tok_end < input_end && 
-	       (_assign_type(*tok_end) == TOK_LIT ||
-		_assign_type(*tok_end) == TOK_VAR)) {
+	       (_assign_type(*tok_end) == TOK_LIT || _assign_type(*tok_end) == TOK_VAR)) {
 		tok_end++;
 	}
 	assert(_assign_type(*tok_end) != TOK_LIT && _assign_type(*tok_end) != TOK_VAR);

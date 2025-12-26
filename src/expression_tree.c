@@ -22,80 +22,33 @@ static inline int _expr_has_error(Token *expr, size_t length)
 
 // Regardless of what expr actually looks like, expressiontree_build_tree will
 // assume the rules/conventions of infix mathematical expressions and build a
-// tree according to this grammar
-//
-// Grammar defines the structure of  meaningful message from the atoms (basic building blocks) of a language
-// (i.e. the "shape" of a meaningful message)
-
-// a syntax tree is nothing but tokens arranged in the grammatical structure
-
-/* 		   Grammar:	
- *  		   (I guess writing them out gives me a picture of
- *  		    how the parsing process goes and what helpers come into
- *  		    play)
- *		   
- *		   mathExpr     := gropExpr op mathExpr
- *		   	        |  groupExpr
- *		   	        |  ε
- *     		   
- *     		   groupExpr    := TOK_LPAREN groupExpr TOK_RPAREN
- *			        |  expr
- *		   
- *		   expr         := primaryExpr TOK_ADD primaryExpr
- *		   	        |  primaryExpr TOK_MINUS primaryExpr
- *		   	        |  atom
- *
- *		   primaryExpr  := unaryExpr TOK_MULT unaryExpr
- *		   	        |  unaryExpr TOK_DIV unaryExpr
- *		   	        |  unaryExpr TOK_MOD unaryExpr
- *
- *		  unaryExpr     := prefixExpr
- *		  	        |  postfixExpr
- *		   
- *		  prefixExpr 	:= TOK_ADD atom
- *                              |  TOK_MINUS atom
- *                              |  TOK_INC atom
- *		  	        |  TOK_DEC atom
- *		  	        |  TOK_LIT TOK_VAR
- *		  	        |  atom
- * 		  
- * 		  postfixExpr   := atom INC
- *		  	        |  atom DEC
- *		  	        |  atom
- *
- *     		   op  		:= TOK_ADD | TOK_MINUS | TOK_MULT | TOK_DIV | 
- *     		       		   TOK_MOD | TOK_INC   | TOK_DEC
- *
- *   		   atom		:= TOK_VAR | TOK_LIT
- */
+// tree according grammar that defines all possible math expressions
 
 ExpressionTree expressiontree_build_tree(Token *expr, size_t length)
 {
-	// Do error and exception handling (return NULL when there is a lexing error)
+	// Error and exception handling (return NULL when there is a lexing error)
 	size_t error_idx = _expr_has_error(expr, length);
-
-	char const *expr_str = expr[0].token_string;
-	int expr_strlen = expr[length - 1].token_string + expr[length - 1].length 
-		- expr_str;
-	if (error_idx > 0) {
-		fprintf(stdout, "error: mathematical expression %.*s is invalid\n",
-				expr_strlen, expr_str);
-		fprintf(stdout, "token[%ld]: %*.s is not a valid token\n", 
-				error_idx, 
-				(int)expr[error_idx].length,
-				expr[error_idx].token_string);
+	if (error_idx != 0) {
+		char const *expr_str = expr[0].token_string;
+		int expr_strlen = expr[length - 1].token_string + expr[length - 1].length - expr_str;
+		if (error_idx > 0) {
+			fprintf(stdout, "error: mathematical expression %.*s is invalid\n",
+					expr_strlen, expr_str);
+			fprintf(stdout, "token[%ld] \"%.*s\" is not a valid token\n", 
+					error_idx + 1, 
+					(int)expr[error_idx].length,
+					expr[error_idx].token_string);
+		}
+		if (error_idx == -1) {
+			fprintf(stdout, "error: number of \"(\" and \")\" in "
+					"mathematical expression %.*s differ.\n",
+					(int)expr_strlen, 
+					expr_str);
+		}
 		return NULL;
 	}
-	if (error_idx == -1) {
-		fprintf(stdout, "error: unmatched number of \"(\" and \")\" in "
-				"mathematical expression %.*s\n",
-				(int)expr_strlen, 
-				expr_str);
-		return NULL;
-	}
 
-
-	// call statically defined recursive_descent to build actual tree
+	// call statically defined parse function to build actual tree
 	
 	ExpressionTree root = NULL;
 	return root;
