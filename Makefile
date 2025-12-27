@@ -10,7 +10,7 @@ $(EXECUTABLE): $(SRC) $(MAIN)  $(HEADERS)
 	$(VECHO) "regular build"
 	$(CC) -o $(EXECUTABLE) $(SRC) $(MAIN) $(FLAGS)
 
-debug: $(SRC) $(MAIN)  $(HEADERS)
+debug: $(SRC) $(MAIN) $(HEADERS)
 	$(VECHO) "Building with the DEBUG symbol"
 	$(CC) -o $(EXECUTABLE) $(SRC) $(MAIN) $(FLAGS) -DDEBUG
 

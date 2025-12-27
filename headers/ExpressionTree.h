@@ -26,7 +26,6 @@ struct Tnode {
 
 #define NAN 0xffUL << 23 | 1	// a (bit) pattern resembling a not-a-number 32-bit float by IEEE-754
 
-
 ExpressionTree expressiontree_build_tree(Token *stream, size_t length);
 void expressiontree_print_to_file(FILE *fp, ExpressionTree root);
 void expressiontree_destroy_tree(ExpressionTree *root);

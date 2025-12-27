@@ -16,7 +16,7 @@ unsigned char const precedenceTable[] = {
 };
 
 // static helpers
-static inline int _expr_has_error(Token *expr, size_t length);
+static inline int _expr_error_idx(Token *expr, size_t length);
 static inline ExpressionTree _parse_expr(Token *expr, size_t length);
 
 // Regardless of what expr actually looks like, expressiontree_build_tree will
@@ -25,19 +25,18 @@ static inline ExpressionTree _parse_expr(Token *expr, size_t length);
 ExpressionTree expressiontree_build_tree(Token *expr, size_t length)
 {
 	// Error and exception handling (return NULL when there is a lexing error)
-	size_t error_idx = _expr_has_error(expr, length);
-	if (error_idx != 0) {
+	size_t error_idx = _expr_error_idx(expr, length);
+	if (error_idx != length) {
 		char const *expr_str = expr[0].token_string;
 		int expr_strlen = expr[length - 1].token_string + expr[length - 1].length - expr_str;
-		if (error_idx > 0) {
+		if (error_idx > -1) {
 			fprintf(stdout, "error: mathematical expression \"%.*s\" is invalid\n",
 					expr_strlen, expr_str);
 			fprintf(stdout, "token[%ld]: \"%.*s\" is not a valid token\n", 
 					error_idx + 1, 
 					(int)expr[error_idx].length,
 					expr[error_idx].token_string);
-		}
-		if (error_idx == -1) {
+		} else {
 			fprintf(stdout, "error: number of \"(\" and \")\" in "
 					"mathematical expression %.*s differ.\n",
 					(int)expr_strlen, 
@@ -66,7 +65,7 @@ void expressiontree_destroy_tree(ExpressionTree *root)
 	*root = NULL;
 }
 
-static inline int _expr_has_error(Token *expr, size_t length)
+static inline int _expr_error_idx(Token *expr, size_t length)
 {
 	// look for error tokens and track the number of '(' and ')'
 	size_t n_lparen = 0, n_rparen = 0;
@@ -78,7 +77,7 @@ static inline int _expr_has_error(Token *expr, size_t length)
 		default: break;
 		}
 	}
-	return (n_lparen == n_rparen) ? 0 : -1;
+	return (n_lparen == n_rparen) ? length : -1;
 }
 
 static inline ExpressionTree _parse_expr(Token *expr, size_t length)
