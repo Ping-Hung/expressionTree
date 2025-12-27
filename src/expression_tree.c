@@ -1,29 +1,27 @@
 #include "../headers/ExpressionTree.h"
 
 //  Unary('++'|'--') > Unary('+'|'-') > binary('*'|'/'|'%') > binary('+' | '-')
-typedef char precedence_t;
+unsigned char const precedenceTable[] = { 
+	// this table is readonly, if a token needs its precedence update, load
+	// its default value to a mutable variable before update
+	[TOK_ADD]   = 0,
+	[TOK_MINUS] = 0,
+	[TOK_MULT]  = 1,
+	[TOK_DIV]   = 1,
+	[TOK_MOD]   = 1,
+	[TOK_INC]   = 2,
+	[TOK_DEC]   = 2,
+	[TOK_LIT]   = 3,
+	[TOK_VAR]   = 3
+};
 
 // static helpers
-static inline int _expr_has_error(Token *expr, size_t length)
-{
-	// look for error tokens and track the number of '(' and ')'
-	size_t n_lparen = 0, n_rparen = 0;
-	for (Token *tok = expr; tok < expr + length; tok++) {
-		switch (tok->type) {
-		case TOK_ERROR:  return tok - expr;
-		case TOK_LPAREN: n_lparen++; break;
-		case TOK_RPAREN: n_rparen++; break;
-		default: break;
-		}
-	}
-	return (n_lparen == n_rparen) ? 0 : -1;
-}
-
+static inline int _expr_has_error(Token *expr, size_t length);
+static inline ExpressionTree _parse_expr(Token *expr, size_t length);
 
 // Regardless of what expr actually looks like, expressiontree_build_tree will
 // assume the rules/conventions of infix mathematical expressions and build a
 // tree according grammar that defines all possible math expressions
-
 ExpressionTree expressiontree_build_tree(Token *expr, size_t length)
 {
 	// Error and exception handling (return NULL when there is a lexing error)
@@ -32,9 +30,9 @@ ExpressionTree expressiontree_build_tree(Token *expr, size_t length)
 		char const *expr_str = expr[0].token_string;
 		int expr_strlen = expr[length - 1].token_string + expr[length - 1].length - expr_str;
 		if (error_idx > 0) {
-			fprintf(stdout, "error: mathematical expression %.*s is invalid\n",
+			fprintf(stdout, "error: mathematical expression \"%.*s\" is invalid\n",
 					expr_strlen, expr_str);
-			fprintf(stdout, "token[%ld] \"%.*s\" is not a valid token\n", 
+			fprintf(stdout, "token[%ld]: \"%.*s\" is not a valid token\n", 
 					error_idx + 1, 
 					(int)expr[error_idx].length,
 					expr[error_idx].token_string);
@@ -49,8 +47,7 @@ ExpressionTree expressiontree_build_tree(Token *expr, size_t length)
 	}
 
 	// call statically defined parse function to build actual tree
-	
-	ExpressionTree root = NULL;
+	ExpressionTree root = _parse_expr(expr, length);
 	return root;
 }
 
@@ -69,3 +66,22 @@ void expressiontree_destroy_tree(ExpressionTree *root)
 	*root = NULL;
 }
 
+static inline int _expr_has_error(Token *expr, size_t length)
+{
+	// look for error tokens and track the number of '(' and ')'
+	size_t n_lparen = 0, n_rparen = 0;
+	for (Token *tok = expr; tok < expr + length; tok++) {
+		switch (tok->type) {
+		case TOK_ERROR:  return tok - expr;
+		case TOK_LPAREN: n_lparen++; break;
+		case TOK_RPAREN: n_rparen++; break;
+		default: break;
+		}
+	}
+	return (n_lparen == n_rparen) ? 0 : -1;
+}
+
+static inline ExpressionTree _parse_expr(Token *expr, size_t length)
+{
+	return NULL;
+}

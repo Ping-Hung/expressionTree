@@ -4,11 +4,6 @@
 #include "tokenizer.h"
 #include "stack.h"
 
-/* The parser (non-existent unit) will take a stream of tokens and build
- * structure (ExpresssionTree) based on the "grammatical" rules of computer
- * arithmetic.
- */
-
 // Inspired by https://github.com/PixelRifts/math-expr-evaluator/tree/master
 
 typedef struct Tnode Tnode;
@@ -29,7 +24,8 @@ struct Tnode {
 	};
 }; 
 
-#define NAN 0xffUL << 23 | 1	// a (bit) pattern that resembles a not-a-number 32-bit float by IEEE-754
+#define NAN 0xffUL << 23 | 1	// a (bit) pattern resembling a not-a-number 32-bit float by IEEE-754
+
 
 ExpressionTree expressiontree_build_tree(Token *stream, size_t length);
 void expressiontree_print_to_file(FILE *fp, ExpressionTree root);
