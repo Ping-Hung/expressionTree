@@ -40,7 +40,7 @@ The tokenizer recognizes the following as valid symbols:
 ``` 
 	(TOK_LIT|TOK_VAR) <space> (TOK_LIT|TOK_VAR) 
 ```
-This differs from regular programming language grammar for which above syntax could mean `(TOK_LIT|TOK_VAR)' initialization.
+This differs from regular programming language grammar for which above syntax could mean `(TOK_LIT|TOK_VAR)` initialization.
 
 # Compile/Build Instructions
 - If an `ExpressionTree` is built successfully, it will be printed onto a file named `parseTree.txt` in this directory.
@@ -81,3 +81,4 @@ Assume `gcc` and `Make` are available on the machine.
 ```
 	make clean
 ```
+
