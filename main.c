@@ -31,13 +31,16 @@ build:
 	if (isspace(str[input_size - 1])) {
 		str[input_size - 1] = '\0';
 	}
-	fprintf(stdout, "input expression: \"%.*s\"\nlength: %ld\n", 
-		(int)input_size, str, input_size);
+	fprintf(stdout, "input expression: \"%.*s\"\nlength: %ld\n", (int)input_size, str, 
+			input_size);
 	// tokenize input string
 	Tokenizer tkz = tokenizer_tokenize(str, input_size);
 
 #ifdef DEBUG
 	tokenizer_display(&tkz);
+	tokenizer_distroy(&tkz);
+	free(str);
+	return EXIT_SUCCESS;
 #endif
 	// parse input string
 	ExpressionTree root = expressiontree_build_tree(&tkz);

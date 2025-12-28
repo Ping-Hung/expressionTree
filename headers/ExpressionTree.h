@@ -17,7 +17,7 @@ typedef ASTNode *ExpressionTree;	// an expression tree is the memory address of 
 struct ASTNode {
 	enum tok_type_t type;
 	long value;	// the (partial) result of the entire expression evaluated at this node 
-			// (may use a float/double if decide to suport floating point values)
+			// value == NAN indicates this node is a TOK_VAR
 	union {
 		struct { ExpressionTree operand; } unary;
 		struct { ExpressionTree left; ExpressionTree right; } binary;
@@ -25,6 +25,7 @@ struct ASTNode {
 }; 
 
 #define NAN 0xffUL << 23 | 1	// a (bit) pattern resembling a not-a-number 32-bit float by IEEE-754
+#define panic(msg) {fprintf(stderr, msg"at line %d\n", __LINE__); assert(false);}
 
 ExpressionTree expressiontree_build_tree(Tokenizer *tkz);
 void expressiontree_print_to_file(FILE *fp, ExpressionTree root);
