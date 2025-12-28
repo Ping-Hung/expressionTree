@@ -1,52 +1,37 @@
 #include "../headers/ExpressionTree.h"
+#include "../headers/Parser.h"
 
 //  Unary('++'|'--') > Unary('+'|'-') > binary('*'|'/'|'%') > binary('+' | '-')
-unsigned char const precedenceTable[] = { 
-	// this table is readonly, if a token needs its precedence update, load
-	// its default value to a mutable variable before update
-	[TOK_ADD]   = 0,
-	[TOK_MINUS] = 0,
-	[TOK_MULT]  = 1,
-	[TOK_DIV]   = 1,
-	[TOK_MOD]   = 1,
-	[TOK_INC]   = 2,
-	[TOK_DEC]   = 2,
-	[TOK_LIT]   = 3,
-	[TOK_VAR]   = 3
-};
+typedef unsigned char precedence_t;
 
 // static helpers
 static inline int _expr_error_idx(Token *expr, size_t length);
-static inline ExpressionTree _parse_expr(Token *expr, size_t length);
+static inline ExpressionTree _parse_expr(Parser *parser, precedence_t min_bp);
 
 // Regardless of what expr actually looks like, expressiontree_build_tree will
 // assume the rules/conventions of infix mathematical expressions and build a
 // tree according grammar that defines all possible math expressions
-ExpressionTree expressiontree_build_tree(Token *expr, size_t length)
+ExpressionTree expressiontree_build_tree(Tokenizer *tkz)
 {
-	// Error and exception handling (return NULL when there is a lexing error)
-	size_t error_idx = _expr_error_idx(expr, length);
-	if (error_idx != length) {
-		char const *expr_str = expr[0].token_string;
-		int expr_strlen = expr[length - 1].token_string + expr[length - 1].length - expr_str;
-		if (error_idx > -1) {
-			fprintf(stdout, "error: mathematical expression \"%.*s\" is invalid\n",
-					expr_strlen, expr_str);
-			fprintf(stdout, "token[%ld]: \"%.*s\" is not a valid token\n", 
-					error_idx + 1, 
-					(int)expr[error_idx].length,
-					expr[error_idx].token_string);
+	assert(tkz && "parameter tkz must be a valid Tokenizer *");
+	// handle lexing errors
+	int error = _expr_error_idx(tkz->tokens, tkz->n_tokens);
+	if (error != tkz->n_tokens) {
+		char const *expr = tkz->tokens[0].token_string;
+		int expr_len = tkz->tokens[error].token_string + tkz->tokens[error].length - expr;
+		if (error > -1) {
+			fprintf(stderr, "expression \"%.*s\" contains invalid token \"%.*s\"\n",
+					expr_len, expr,
+					(int)tkz->tokens[error].length, tkz->tokens[error].token_string);
 		} else {
-			fprintf(stdout, "error: number of \"(\" and \")\" in "
-					"mathematical expression %.*s differ.\n",
-					(int)expr_strlen, 
-					expr_str);
+			fprintf(stderr, "expression \"%.*s\" has unmatched number of \"(\" and \")\"\n"
+					,expr_len, expr);
 		}
 		return NULL;
 	}
 
-	// call statically defined parse function to build actual tree
-	ExpressionTree root = _parse_expr(expr, length);
+	Parser parser = parser_init(tkz);
+	ExpressionTree root = _parse_expr(&parser, 0);
 	return root;
 }
 
@@ -80,7 +65,10 @@ static inline int _expr_error_idx(Token *expr, size_t length)
 	return (n_lparen == n_rparen) ? length : -1;
 }
 
-static inline ExpressionTree _parse_expr(Token *expr, size_t length)
+static inline ExpressionTree _parse_expr(Parser *parser, precedence_t min_bp)
 {
+	// Goal: use Pratt parsing to parse infix expressions
+	assert(parser && "parameter parser must be a valid Parser *");
+
 	return NULL;
 }

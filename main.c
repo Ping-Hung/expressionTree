@@ -40,7 +40,7 @@ build:
 	tokenizer_display(&tkz);
 #endif
 	// parse input string
-	ExpressionTree root = expressiontree_build_tree(tkz.tokens, tkz.n_tokens);
+	ExpressionTree root = expressiontree_build_tree(&tkz);
 	if (root) {
 		FILE *fp = fopen("parseTree.txt", "w");
 		expressiontree_print_to_file(fp, root);

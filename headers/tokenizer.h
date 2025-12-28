@@ -13,7 +13,7 @@
  * - It is done here by labelling substrings of the input stream as one of the
  *   following tok_type_t and filtering out whitespaces.
  *
- * The parser (non-existent unit) will take this stream of tokens and build
+ * Parser will take this stream of tokens and build
  * structure (ExpresssionTree) based on the "grammatical" rules of computer
  * arithmetic.
  */
@@ -40,9 +40,9 @@ enum tok_type_t {
 // 	- type: enum tok_type_t:= what kind of token 
 // 	** want token_string[0...length -  1] to entail all the characters in the actual token **
 typedef struct {
+	enum tok_type_t type;
 	char const *token_string;
 	size_t length;
-	enum tok_type_t type;
 } Token;
 
 
