@@ -115,7 +115,6 @@ static inline ExpressionTree _pratt_parse(Parser *parser, precedence_t curr_bp)
 	} else {
 		lhs = _make_node(tok);
 	}
-	return NULL;
 
 	// parse the rest of the expression
 	// parser->curr should point to an operator at the beginning of each loop iteration
