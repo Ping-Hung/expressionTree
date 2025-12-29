@@ -146,31 +146,6 @@ static inline ExpressionTree _parse_atom(Token tok)
 	return node;
 }
 
-static inline ExpressionTree _parse_prefix(Token tok, Parser *parser, precedence_t curr_bp)
-{
-	// indirectly recursive (calling _parse_expr)
-	ExpressionTree node = NULL;
-	switch (tok.type) {
-	case TOK_LIT: case TOK_VAR:
-		node = _parse_atom(tok);
-		break;
-	case TOK_ADD: case TOK_MINUS: case TOK_INC: case TOK_DEC: 
-		node = malloc(sizeof(*node));
-		if (!node) {
-			panic("malloc failed in _parse_prefix");
-		}
-		node->token = tok;
-		node->value = 0;
-		// the operand of any unary operator is (in its most general sense) an expression
-		parser_advance(parser);
-		node->unary.operand = _parse_expr(parser, curr_bp + 1);
-		break;
-	default:
-		fprintf(stderr, "bad token in %s\n", __func__);
-	}
-	return node;
-}
-
 static inline ExpressionTree _parse_postfix(ExpressionTree operator, ExpressionTree lhs)
 {
 	// operator could be (TOK_LIT, TOK_VAR, TOK_INC, or TOK_DEC)
@@ -198,6 +173,31 @@ static inline ExpressionTree _parse_postfix(ExpressionTree operator, ExpressionT
 	return node;
 }
 
+static inline ExpressionTree _parse_prefix(Token tok, Parser *parser, precedence_t curr_bp)
+{
+	// indirectly recursive (calling _parse_expr)
+	ExpressionTree node = NULL;
+	switch (tok.type) {
+	case TOK_LIT: case TOK_VAR:
+		node = _parse_atom(tok);
+		break;
+	case TOK_ADD: case TOK_MINUS: case TOK_INC: case TOK_DEC: 
+		node = malloc(sizeof(*node));
+		if (!node) {
+			panic("malloc failed in _parse_prefix");
+		}
+		node->token = tok;
+		node->value = 0;
+		// the operand of any unary operator is (in its most general sense) an expression
+		node->unary.operand = _parse_expr(parser, curr_bp);
+		break;
+	default:
+		fprintf(stderr, "bad token in %s\n", __func__);
+	}
+	return node;
+}
+
+
 static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 {
 
@@ -214,21 +214,29 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 	assert(parser && "parameter parser must be a valid Parser *");
 
 	// make lhs
-	Token tok = parser_advance(parser);
+	Token tok = parser_peek(parser);	// *parser->curr == tok
 	ExpressionTree lhs = NULL;
 	switch (tok.type) {
 	case TOK_LPAREN:
 		// any expression preceeded by a '(' means nesting
 		lhs = _parse_expr(parser, curr_bp + 1); 
+		parser_advance(parser);
+		tok = parser_advance(parser);
 		assert("expected to see a ')' after parsing a \"'('expr\"" && 
-			parser_advance(parser).type == TOK_RPAREN);
+			tok.type == TOK_RPAREN);
 		break;
 	case TOK_VAR: case TOK_LIT:
 		lhs = _parse_atom(tok);
+		tok = parser_advance(parser);
 		break;
 	case TOK_ADD: case TOK_MINUS: case TOK_INC: case TOK_DEC:
 		// prefix expression
-		lhs = _parse_prefix(tok, parser, curr_bp);
+		{
+			precedence_t lbp, rbp;
+			_prefix_bp(&lbp, &rbp, tok);
+			lhs = _parse_prefix(tok, parser, rbp);
+			parser_advance(parser);
+		}
 		break;
 	default:
 		panic("bad token at _parse_expr");
@@ -238,19 +246,22 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 
 	// parse the rest of the expression (lhs is completely parsed)
 	// parser->curr should point to an operator at the beginning of each loop iteration
-	ExpressionTree op = malloc(sizeof(*op));
+	ExpressionTree op = NULL;
 	ExpressionTree rhs = NULL;
-	if (!op) {
-		panic("malloc failed in _parse_expr");
-	}
 	while (tok.type != TOK_ERROR && tok.type != TOK_EOF) {
-		tok = parser_advance(parser);	
+		tok = parser_peek(parser);	
 		// parser->curr should mark the beginning of the rhs expression after this line, 
 		// and tok should be an operator
 
-		// build op up then get operator binding power 
+		// build op (an ASTNode holding an operator)
+		op = malloc(sizeof(*op));
+		if (!op) {
+			panic("malloc failed in _parse_expr");
+		}
 		op->token = tok;
 		op->value = 0;
+
+		// get binding power
 		precedence_t lbp, rbp;
 		if ((lhs->token.type == TOK_VAR || lhs->token.type == TOK_LIT) &&
 		     (op->token.type == TOK_INC || op->token.type == TOK_DEC)) {
@@ -281,6 +292,7 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 			break;
 		}
 		// use recursion to build rhs, if rhs exists
+		parser_advance(parser);
 		rhs = _parse_expr(parser, rbp);
 
 	}

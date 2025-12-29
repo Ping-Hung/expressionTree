@@ -66,7 +66,8 @@ Tokenizer tokenizer_tokenize(char const *input, size_t length)
 		i++;
 	}
 
-	tokenizer.n_tokens = n_tokens;
+	tokenizer.tokens[i] = (Token) {.token_string = '\0', .length = 0, .type = TOK_EOF};
+	tokenizer.n_tokens = n_tokens + 1;
 	return tokenizer;
 }
 
