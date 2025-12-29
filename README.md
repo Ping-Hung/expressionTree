@@ -9,30 +9,30 @@ The tokenizer recognizes the following as valid symbols:
 
 # Grammar:
 ```
-					expr	:=  expr '+' Mult
-						|   expr '-' Mult
-						|   Mult
+			expr	:=  expr '+' Mult
+				|   expr '-' Mult
+				|   Mult
 
-					Mult	:= Mult '*' Unary
-						|  Mult '/' Unary
-						|  Mult '%' Unary
-						|  Mult Atom
-						|  Unary
+			Mult	:= Mult '*' Unary
+				|  Mult '/' Unary
+				|  Mult '%' Unary
+				|  Mult Atom
+				|  Unary
 
-					Unary	:= '+' Unary
-						|  '-' Unary
-						|  IncDec
+			Unary	:= '+' Unary
+				|  '-' Unary
+				|  IncDec
 
-					IncDec  := '++' IncDec
-						|  '--' IncDec
-						|  IncDec '++'
-						|  IncDec '--'
-						|  Atom
+			IncDec  := '++' IncDec
+				|  '--' IncDec
+				|  IncDec '++'
+				|  IncDec '--'
+				|  Atom
 
-					Atom	:= TOK_LIT | TOK_VAR | '(' expr ')'
+			Atom	:= TOK_LIT | TOK_VAR | '(' expr ')'
 
-					TOK_LIT	:= ^[0-9]+$
-					TOK_VAR	:= ^[A-Za-z]+[_A-Za-z0-9]*$
+			TOK_VAR	:= ^[A-Za-z]+[_A-Za-z0-9]*$
+			TOK_LIT	:= ^[0-9]+$
 ```
 
 - **Note**: implicit multiplication is supported via the syntax 
@@ -80,3 +80,4 @@ Assume `gcc` and `Make` are available on the machine.
 ```
 	make clean
 ```
+
