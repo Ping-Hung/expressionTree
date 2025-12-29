@@ -292,7 +292,6 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 		// use recursion to build rhs, if rhs exists
 		parser_advance(parser);
 		rhs = _parse_expr(parser, rbp);
-
 	}
 	op->binary.right = rhs;
 	return op;
