@@ -250,7 +250,6 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 	// parse the rest of the expression (lhs is completely parsed)
 	// parser->curr should point to an operator at the beginning of each loop iteration
 	ExpressionTree op = lhs;
-	ExpressionTree rhs = NULL;
 	while (parser_peek(parser).type != TOK_ERROR && parser_peek(parser).type != TOK_EOF) {
 		tok = parser_peek(parser);	
 		// build op (an ASTNode holding an operator)
@@ -260,8 +259,8 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 		}
 		op->token = tok;
 		op->value = 0;
-		op->binary.left = NULL;
-
+		op->binary.left  = NULL;
+		op->binary.right = NULL;
 		// get binding power
 		precedence_t lbp, rbp;
 		if ((lhs->token.type == TOK_VAR || lhs->token.type == TOK_LIT) &&
@@ -294,11 +293,9 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 		if (curr_bp > lbp) {
 			break;
 		}
-		// use recursion to build rhs, if rhs exists
+		// use recursion to build rhs
 		parser_advance(parser);
-		rhs = _parse_expr(parser, rbp);
-		
-		op->binary.right = rhs;
+		op->binary.right = _parse_expr(parser, rbp); 
 	}
 	return op;
 }
