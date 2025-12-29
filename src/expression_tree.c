@@ -33,35 +33,6 @@ ExpressionTree expressiontree_build_tree(Tokenizer *tkz)
 		}
 		return NULL;
 	}
-
-	Parser parser = parser_init(tkz);
-	ExpressionTree root = _parse_expr(&parser, 0);
-	return root;
-}
-
-char const *operatorSymbolLUT[] = {
-	[TOK_ADD] 	= "+",
-	[TOK_MINUS]	= "-",
-	[TOK_MULT]	= "*",
-	[TOK_DIV]	= "/",
-	[TOK_MOD]	= "%",
-	[TOK_INC]	= "++",
-	[TOK_DEC]	= "--"
-};
-
-void expressiontree_print_to_file(FILE *fp, ExpressionTree root)
-{
-	return;
-}
-
-void expressiontree_destroy_tree(ExpressionTree *root)
-{
-	// freeing tree via a post order tree walk
-	assert(root && "arg root must be a valid ExpressionTree (Tnode *)");
-	if (*root) {
-		// recursively free the tree
-		return NULL;
-	}
 	// actual parsing
 	Parser parser = parser_init(tkz);
 	ExpressionTree root = _parse_expr(&parser, 0);
@@ -89,8 +60,8 @@ void expressiontree_destroy_tree(ExpressionTree *root)
 	assert(root && "arg root must be a valid ExpressionTree (Tnode *)");
 	if (*root) {
 		// recursively free the tree
+		
 	}
-	*root = NULL;
 }
 
 static inline int _expr_error_idx(Token *expr, size_t length)
@@ -172,113 +143,6 @@ static inline ExpressionTree _parse_atom(Token tok)
 		.value = (tok.type == TOK_LIT) ? atol(tok.token_string) : NAN,
 		.unary.operand = NULL
 	};
-	return node;
-}
-
-static inline int _expr_error_idx(Token *expr, size_t length)
-{
-	// look for error tokens and track the number of '(' and ')'
-	StackFrame *stack = NULL;
-	for (Token *tok = expr; tok < expr + length; tok++) {
-		switch (tok->type) {
-		case TOK_ERROR:
-			return tok - expr;
-		case TOK_LPAREN:
-			push(&stack, tok);
-			break;
-		case TOK_RPAREN:
-			pop(&stack);
-			break;
-		default:
-			break;
-		}
-	}
-
-	bool good_paren = is_empty(stack);
-	while (!is_empty(stack)) {
-		pop(&stack);
-	}
-
-	return good_paren ? length : -1;
-}
-
-static inline void _prefix_bp(precedence_t *lbp, precedence_t *rbp, Token token)
-{
-	assert("parameter lbp and rbp must be valid precedence_t *'s" && lbp && rbp);
-	switch (token.type) {
-	case TOK_ADD: case TOK_MINUS:
-		{*lbp = 0, *rbp = 2;}
-		break;
-	case TOK_INC: case TOK_DEC:
-		{*lbp = 0, *rbp = 4;}
-		break;
-	default:
-		panic("bad token in _prefix_bp");
-	}
-}
-
-static inline void _infix_bp(precedence_t *lbp, precedence_t *rbp, Token token)
-{
-	assert("parameter lbp and rbp must be valid precedence_t *'s" && lbp && rbp);
-	switch (token.type) {
-	case TOK_ADD: case TOK_MINUS:
-		// need to consider if they are stand alone prefix operators
-		{*lbp = 1, *rbp = 2;}
-		break;
-	case TOK_MULT: case TOK_DIV: case TOK_MOD:
-	case TOK_LIT:  case TOK_VAR:	
-		// give literals and variable same binding power as
-		// multiplicative statements to support implicit multiplication
-		{*lbp = 3, *rbp = 4;}
-		break;
-	default:
-		panic("bad token in _infix_bp");
-	}
-}
-
-static inline ExpressionTree _parse_atom(Token tok)
-{
-	// no operator or parentheses shall be here
-	if (tok.type != TOK_LIT && tok.type != TOK_VAR) {
-		panic("expecting TOK_LIT or TOK_VAR in _parse_atom");
-		return NULL;
-	}
-
-	ExpressionTree node = malloc(sizeof(*node));
-	if (!node) {
-		panic("malloc failed in _parse_atom");
-	}
-
-	*node = (ASTNode) { 
-		.token = tok,
-		.value = (tok.type == TOK_LIT) ? atol(tok.token_string) : NAN,
-		.unary.operand = NULL
-	};
-	return node;
-}
-
-static inline ExpressionTree _parse_prefix(Token tok, Parser *parser, precedence_t curr_bp)
-{
-	// indirectly recursive (calling _parse_expr)
-	ExpressionTree node = NULL;
-	switch (tok.type) {
-	case TOK_LIT: case TOK_VAR:
-		node = _parse_atom(tok);
-		break;
-	case TOK_ADD: case TOK_MINUS: case TOK_INC: case TOK_DEC: 
-		node = malloc(sizeof(*node));
-		if (!node) {
-			panic("malloc failed in _parse_prefix");
-		}
-		node->token = tok;
-		node->value = 0;
-		// the operand of any unary operator is (in its most general sense) an expression
-		parser_advance(parser);
-		node->unary.operand = _parse_expr(parser, curr_bp + 1);
-		break;
-	default:
-		fprintf(stderr, "bad token in %s\n", __func__);
-	}
 	return node;
 }
 
