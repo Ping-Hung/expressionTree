@@ -26,9 +26,6 @@ static inline Token parser_peek(Parser *parser)
 {
 	// returns the token parser->curr is pointing to
 	assert(parser && "parameter tkz must be a valid Parser *");
-	size_t remaining_tokens = parser->end - parser->curr;
-	assert(0 <= remaining_tokens && remaining_tokens < n_tokens &&
-			"parser struct invariant violated, see headers/Parser.h");
 	assert(parser->curr < parser->end);
 
 	return parser->curr[0];
@@ -38,9 +35,6 @@ static inline Token parser_advance(Parser *parser)
 {
 	// advance curr, then return the token it was pointing to before hand
 	assert(parser && "parameter tkz must be a valid Parser *");
-	size_t remaining_tokens = parser->end - parser->curr;
-	assert(0 <= remaining_tokens && remaining_tokens < n_tokens &&
-			"parser struct invariant violated, see headers/Parser.h");
 	assert(parser->curr < parser->end);
 
 	parser->curr++;

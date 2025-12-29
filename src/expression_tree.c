@@ -227,7 +227,7 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 		break;
 	case TOK_VAR: case TOK_LIT:
 		lhs = _parse_atom(tok);
-		tok = parser_advance(parser);
+		parser_advance(parser);
 		break;
 	case TOK_ADD: case TOK_MINUS: case TOK_INC: case TOK_DEC:
 		// prefix expression
@@ -246,13 +246,10 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 
 	// parse the rest of the expression (lhs is completely parsed)
 	// parser->curr should point to an operator at the beginning of each loop iteration
-	ExpressionTree op = NULL;
+	ExpressionTree op = lhs;
 	ExpressionTree rhs = NULL;
-	while (tok.type != TOK_ERROR && tok.type != TOK_EOF) {
+	while (parser_peek(parser).type != TOK_ERROR && parser_peek(parser).type != TOK_EOF) {
 		tok = parser_peek(parser);	
-		// parser->curr should mark the beginning of the rhs expression after this line, 
-		// and tok should be an operator
-
 		// build op (an ASTNode holding an operator)
 		op = malloc(sizeof(*op));
 		if (!op) {
@@ -260,6 +257,7 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 		}
 		op->token = tok;
 		op->value = 0;
+		op->binary.left = NULL;
 
 		// get binding power
 		precedence_t lbp, rbp;
