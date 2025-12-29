@@ -60,7 +60,6 @@ void expressiontree_destroy_tree(ExpressionTree *root)
 	assert(root && "arg root must be a valid ExpressionTree (Tnode *)");
 	if (*root) {
 		// recursively free the tree
-=======
 		return NULL;
 	}
 	// actual parsing
@@ -166,7 +165,6 @@ static inline ExpressionTree _parse_atom(Token tok)
 	ExpressionTree node = malloc(sizeof(*node));
 	if (!node) {
 		panic("malloc failed in _parse_atom");
->>>>>>> b613ed8 (have the "shape" of _parse_expr, don't know if it's right)
 	}
 
 	*node = (ASTNode) { 
@@ -177,7 +175,6 @@ static inline ExpressionTree _parse_atom(Token tok)
 	return node;
 }
 
-<<<<<<< HEAD
 static inline int _expr_error_idx(Token *expr, size_t length)
 {
 	// look for error tokens and track the number of '(' and ')'
@@ -285,7 +282,6 @@ static inline ExpressionTree _parse_prefix(Token tok, Parser *parser, precedence
 	return node;
 }
 
-=======
 static inline ExpressionTree _parse_prefix(Token tok, Parser *parser, precedence_t curr_bp)
 {
 	// indirectly recursive (calling _parse_expr)
@@ -311,7 +307,6 @@ static inline ExpressionTree _parse_prefix(Token tok, Parser *parser, precedence
 	return node;
 }
 
->>>>>>> b613ed8 (have the "shape" of _parse_expr, don't know if it's right)
 static inline ExpressionTree _parse_postfix(ExpressionTree operator, ExpressionTree lhs)
 {
 	// operator could be (TOK_LIT, TOK_VAR, TOK_INC, or TOK_DEC)
