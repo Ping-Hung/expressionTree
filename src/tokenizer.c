@@ -13,7 +13,7 @@ Tokenizer tokenizer_tokenize(char const *input, size_t length)
 
 	Tokenizer tokenizer = { 0 };
 	// tokenizer.tokens is ought to be Token[length]
-	tokenizer.tokens = malloc(sizeof(*tokenizer.tokens) * length);
+	tokenizer.tokens = malloc(sizeof(*tokenizer.tokens) * (length + 1));
 
 	// use a "greedy sliding-window" approach to isolate each token from input
 	// greedy in a sense that each pass of this tokenizing process will consume as many

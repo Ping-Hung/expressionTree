@@ -57,10 +57,13 @@ void expressiontree_print_to_file(FILE *fp, ExpressionTree root)
 void expressiontree_destroy_tree(ExpressionTree *root)
 {
 	// freeing tree via a post order tree walk
-	assert(root && "arg root must be a valid ExpressionTree (Tnode *)");
+	assert(root && "arg root must be a valid ExpressionTree * (ASTNode **)");
 	if (*root) {
-		// recursively free the tree
-		
+		// recursively free the tree (treating ExpressionTree as regular Binary Tree)
+		expressiontree_destroy_tree(&(*root)->binary.left);
+		expressiontree_destroy_tree(&(*root)->binary.right);
+		free(*root);
+		*root = NULL;
 	}
 }
 
@@ -270,6 +273,7 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 			 *		     |	
 			 *		    lhs
 			 */ 		    
+			parser_advance(parser);
 			continue;
 		} else if (op->token.type == TOK_VAR || op->token.type == TOK_LIT) {
 			// implicit multiplication
@@ -279,6 +283,7 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 			 *	       /   \
 			 *	     lhs   op
 			 */ 		    
+			parser_advance(parser);
 			continue;
 		} else {
 			// regular infix operators or error
@@ -292,7 +297,8 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 		// use recursion to build rhs, if rhs exists
 		parser_advance(parser);
 		rhs = _parse_expr(parser, rbp);
+		
+		op->binary.right = rhs;
 	}
-	op->binary.right = rhs;
 	return op;
 }
