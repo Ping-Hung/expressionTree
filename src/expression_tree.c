@@ -12,14 +12,9 @@ static inline ExpressionTree _parse_prefix(Token tok, Parser *parser, precedence
 static inline ExpressionTree _parse_postfix(ExpressionTree operator, ExpressionTree lhs);
 static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp);
 
-
 // main apis
 ExpressionTree expressiontree_build_tree(Tokenizer *tkz)
 {
-	/* Regardless of what expr actually looks like, expressiontree_build_tree will
-	 * assume the rules/conventions of infix mathematical expressions and build a
-	 * tree according grammar that defines all possible math expressions
-	 * */
 	assert(tkz && "parameter tkz must be a valid Tokenizer *");
 	// handle lexing errors
 	int error = _expr_error_idx(tkz->tokens, tkz->n_tokens);
@@ -65,10 +60,124 @@ void expressiontree_destroy_tree(ExpressionTree *root)
 	assert(root && "arg root must be a valid ExpressionTree (Tnode *)");
 	if (*root) {
 		// recursively free the tree
+=======
+		return NULL;
+	}
+	// actual parsing
+	Parser parser = parser_init(tkz);
+	ExpressionTree root = _parse_expr(&parser, 0);
+	return root;
+}
+
+char const *operatorSymbolLUT[] = {
+	[TOK_ADD] 	= "+",
+	[TOK_MINUS]	= "-",
+	[TOK_MULT]	= "*",
+	[TOK_DIV]	= "/",
+	[TOK_MOD]	= "%",
+	[TOK_INC]	= "++",
+	[TOK_DEC]	= "--"
+};
+
+void expressiontree_print_to_file(FILE *fp, ExpressionTree root)
+{
+	return;
+}
+
+void expressiontree_destroy_tree(ExpressionTree *root)
+{
+	// freeing tree via a post order tree walk
+	assert(root && "arg root must be a valid ExpressionTree (Tnode *)");
+	if (*root) {
+		// recursively free the tree
 	}
 	*root = NULL;
 }
 
+static inline int _expr_error_idx(Token *expr, size_t length)
+{
+	// look for error tokens and track the number of '(' and ')'
+	StackFrame *stack = NULL;
+	for (Token *tok = expr; tok < expr + length; tok++) {
+		switch (tok->type) {
+		case TOK_ERROR:
+			return tok - expr;
+		case TOK_LPAREN:
+			push(&stack, tok);
+			break;
+		case TOK_RPAREN:
+			pop(&stack);
+			break;
+		default:
+			break;
+		}
+	}
+
+	bool good_paren = is_empty(stack);
+	while (!is_empty(stack)) {
+		pop(&stack);
+	}
+
+	return good_paren ? length : -1;
+}
+
+static inline void _prefix_bp(precedence_t *lbp, precedence_t *rbp, Token token)
+{
+	assert("parameter lbp and rbp must be valid precedence_t *'s" && lbp && rbp);
+	switch (token.type) {
+	case TOK_ADD: case TOK_MINUS:
+		{*lbp = 0, *rbp = 2;}
+		break;
+	case TOK_INC: case TOK_DEC:
+		{*lbp = 0, *rbp = 4;}
+		break;
+	default:
+		panic("bad token in _prefix_bp");
+	}
+}
+
+static inline void _infix_bp(precedence_t *lbp, precedence_t *rbp, Token token)
+{
+	assert("parameter lbp and rbp must be valid precedence_t *'s" && lbp && rbp);
+	switch (token.type) {
+	case TOK_ADD: case TOK_MINUS:
+		// need to consider if they are stand alone prefix operators
+		{*lbp = 1, *rbp = 2;}
+		break;
+	case TOK_MULT: case TOK_DIV: case TOK_MOD:
+	case TOK_LIT:  case TOK_VAR:	
+		// give literals and variable same binding power as
+		// multiplicative statements to support implicit multiplication
+		{*lbp = 3, *rbp = 4;}
+		break;
+	default:
+		panic("bad token in _infix_bp");
+	}
+}
+
+static inline ExpressionTree _parse_atom(Token tok)
+{
+	// no operator or parentheses shall be here
+	if (tok.type != TOK_LIT && tok.type != TOK_VAR) {
+		panic("expecting TOK_LIT or TOK_VAR in _parse_atom");
+		return NULL;
+	}
+
+	ExpressionTree node = malloc(sizeof(*node));
+	if (!node) {
+		panic("malloc failed in _parse_atom");
+>>>>>>> b613ed8 (have the "shape" of _parse_expr, don't know if it's right)
+	}
+
+	*node = (ASTNode) { 
+		.token = tok,
+		.value = (tok.type == TOK_LIT) ? atol(tok.token_string) : NAN,
+		.unary.operand = NULL
+	};
+	return node;
+}
+
+<<<<<<< HEAD
 static inline int _expr_error_idx(Token *expr, size_t length)
 {
 	// look for error tokens and track the number of '(' and ')'
@@ -176,6 +285,33 @@ static inline ExpressionTree _parse_prefix(Token tok, Parser *parser, precedence
 	return node;
 }
 
+=======
+static inline ExpressionTree _parse_prefix(Token tok, Parser *parser, precedence_t curr_bp)
+{
+	// indirectly recursive (calling _parse_expr)
+	ExpressionTree node = NULL;
+	switch (tok.type) {
+	case TOK_LIT: case TOK_VAR:
+		node = _parse_atom(tok);
+		break;
+	case TOK_ADD: case TOK_MINUS: case TOK_INC: case TOK_DEC: 
+		node = malloc(sizeof(*node));
+		if (!node) {
+			panic("malloc failed in _parse_prefix");
+		}
+		node->token = tok;
+		node->value = 0;
+		// the operand of any unary operator is (in its most general sense) an expression
+		parser_advance(parser);
+		node->unary.operand = _parse_expr(parser, curr_bp + 1);
+		break;
+	default:
+		fprintf(stderr, "bad token in %s\n", __func__);
+	}
+	return node;
+}
+
+>>>>>>> b613ed8 (have the "shape" of _parse_expr, don't know if it's right)
 static inline ExpressionTree _parse_postfix(ExpressionTree operator, ExpressionTree lhs)
 {
 	// operator could be (TOK_LIT, TOK_VAR, TOK_INC, or TOK_DEC)
@@ -205,17 +341,17 @@ static inline ExpressionTree _parse_postfix(ExpressionTree operator, ExpressionT
 
 static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 {
-	// every token has a meaning, this meant computation precedence in this context,
-	// which affect their relative position in the resulting ExpressionTree
 
 	/*  this routine will be handling general expressions, assume infix by default.
-	 * _parse_atom, _parse_prefix will be called when meet tokens that 
-	 * possess such semantic meaning.
-	 *
+	 * _parse_atom, _parse_prefix, and _parse_postfix will be called when meet tokens that 
+	 *  possess such semantic meaning.
 	 *  Roughly breaking expression (expr) down to 3 sections, 
 	 *  		 expr := lhs op rhs
 	 *  Use (indirect + direct) recursion to parse this entire thing
 	 */ 
+	// A variant of Pratt Parsing
+	// every token has a meaning, this meant computation precedence in this context,
+	// which affect their relative position in the resulting ExpressionTree
 	assert(parser && "parameter parser must be a valid Parser *");
 
 	// make lhs
@@ -281,7 +417,6 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 			op->binary.left = lhs;
 			_infix_bp(&lbp, &rbp, op->token);
 		}
-
 
 		if (curr_bp > lbp) {
 			break;
