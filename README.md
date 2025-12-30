@@ -4,7 +4,7 @@ This is an attempt to create a simple scanner (tokenizer) and parser that builds
 # Lexical Symbols:
 The tokenizer recognizes the following as valid symbols: 
 - variables (regex `[A-Za-z_]+[A-Za-z0-9_]$`) 
-- integral numeric literals (regex `^[0-9]+$)
+- integral numeric literals (regex `^[0-9]+$`)
 - operators (one of `{'+', '-', '*', '/', '%', '++', '--'}`)
 
 # Grammar:
@@ -80,5 +80,6 @@ Assume `gcc` and `Make` are available on the machine.
 ```
 	make clean
 ```
+
 
 
