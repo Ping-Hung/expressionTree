@@ -256,11 +256,9 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 		lhs = _parse_expr(parser, curr_bp + 1); 
 		assert(parser_peek(parser).type == TOK_RPAREN && 
 		       "expected to see a ')' after parsing a \"'('expr\"");
-		parser_advance(parser);
 		break;
 	case TOK_VAR: case TOK_LIT:
 		lhs = _parse_atom(tok);
-		parser_advance(parser);
 		break;
 	case TOK_ADD: case TOK_MINUS: case TOK_INC: case TOK_DEC:
 		// prefix expression
@@ -268,23 +266,22 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 			precedence_t lbp, rbp;
 			_prefix_bp(&lbp, &rbp, tok);
 			lhs = _parse_prefix(tok, parser, rbp);
-			parser_advance(parser);
 		}
 		break;
 	default:
 		panic("bad token at _parse_expr before loop");
 	}
+	parser_advance(parser);
 	assert(parser_peek(parser).type != TOK_RPAREN);	 // sanity check, no ")" permitted below this
 
 	// parse the rest of the expression (lhs is completely parsed)
 	// parser->curr[0] should point to an operator before 1st iteration of the loop
-	ExpressionTree op = lhs;
 	for (tok = parser_peek(parser); tok.type != TOK_ERROR && tok.type != TOK_EOF; tok = parser_peek(parser)) {
-		// build op (an ASTNode holding an operator)
-		op = malloc(sizeof(*op));
+		ExpressionTree op = malloc(sizeof(*op));
 		if (!op) {
 			panic("malloc failed in _parse_expr");
 		}
+		// build op (an ASTNode holding an operator)
 		*op = (ASTNode) {
 			.token = tok,
 			.value = 0,
@@ -292,7 +289,7 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 			.binary.right = NULL
 		};
 
-		// get binding power
+		// get binding power (implicit multiplication is also handled here)
 		precedence_t lbp, rbp;
 		_infix_bp(&lbp, &rbp, op->token);
 
