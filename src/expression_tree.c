@@ -275,7 +275,7 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 	assert(parser_peek(parser).type != TOK_RPAREN);	 // sanity check, no ")" permitted below this
 
 	// parse the rest of the expression (lhs is completely parsed)
-	// parser->curr[0] should point to an operator before 1st iteration of the loop
+	// parser->curr should point to an operator before 1st iteration of the loop
 	for (tok = parser_peek(parser); tok.type != TOK_ERROR && tok.type != TOK_EOF; tok = parser_peek(parser)) {
 		ExpressionTree op = malloc(sizeof(*op));
 		if (!op) {
