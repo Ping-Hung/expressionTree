@@ -36,18 +36,13 @@ build:
 	// tokenize input string
 	Tokenizer tkz = tokenizer_tokenize(str, input_size);
 
-#ifdef DEBUG
-	tokenizer_display(&tkz);
-	tokenizer_distroy(&tkz);
-	free(str);
-	return EXIT_SUCCESS;
-#endif
 	// parse input string
 	ExpressionTree root = expressiontree_build_tree(&tkz);
 	if (root) {
 		FILE *fp = fopen("parseTree.txt", "w");
-		expressiontree_print_to_file(fp, root);
+		expressiontree_print_to_file(fp, 0, root);
 		fclose(fp);
+		fprintf(stdout, "expressionTree printed to \"parseTree.txt\"\n");
 		expressiontree_destroy_tree(&root);
 	}
 	tokenizer_distroy(&tkz);

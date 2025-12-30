@@ -25,7 +25,7 @@ typedef ASTNode *ExpressionTree;
 #define panic(msg) {fprintf(stderr, "%s at line %d\n", msg, __LINE__); assert(false);}
 
 ExpressionTree expressiontree_build_tree(Tokenizer *tkz);
-void expressiontree_print_to_file(FILE *fp, ExpressionTree root);
+void expressiontree_print_to_file(FILE *fp, int depth, ExpressionTree root);
 void expressiontree_destroy_tree(ExpressionTree *root);
 
 #endif /* end of __EXPRESSION_TREE__ */

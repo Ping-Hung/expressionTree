@@ -49,9 +49,24 @@ char const *operatorSymbolLUT[] = {
 	[TOK_DEC]	= "--"
 };
 
-void expressiontree_print_to_file(FILE *fp, ExpressionTree root)
+void expressiontree_print_to_file(FILE *fp, int depth, ExpressionTree root)
 {
-	return;
+	assert(fp);
+	if (root) {
+
+		if (depth > 0) {
+			fprintf(fp, "%*s%*s", 
+					depth, " ",
+					depth, "|__");
+		}
+		if (root->token.type == TOK_VAR || root->token.type == TOK_LIT ) {
+			fprintf(fp, "\"%.*s\"\n", (int)root->token.length, root->token.token_string);
+		} else {
+			fprintf(fp, "\"%s\"\n", operatorSymbolLUT[root->token.type]);
+		}
+		expressiontree_print_to_file(fp, depth + 1, root->binary.left);
+		expressiontree_print_to_file(fp, depth + 1, root->binary.right);
+	}
 }
 
 void expressiontree_destroy_tree(ExpressionTree *root)
@@ -191,8 +206,11 @@ static inline ExpressionTree _parse_prefix(Token tok, Parser *parser, precedence
 		}
 		node->token = tok;
 		node->value = 0;
+		precedence_t lbp = 0, rbp = 0;
+		_prefix_bp(&lbp, &rbp, tok);
+		parser_advance(parser);
 		// the operand of any unary operator is (in its most general sense) an expression
-		node->unary.operand = _parse_expr(parser, curr_bp);
+		node->unary.operand = _parse_expr(parser, rbp);
 		break;
 	default:
 		fprintf(stderr, "bad token in %s\n", __func__);
@@ -222,11 +240,11 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 	switch (tok.type) {
 	case TOK_LPAREN:
 		// any expression preceeded by a '(' means nesting
-		lhs = _parse_expr(parser, curr_bp + 1); 
 		parser_advance(parser);
-		tok = parser_advance(parser);
+		lhs = _parse_expr(parser, curr_bp + 1); 
 		assert("expected to see a ')' after parsing a \"'('expr\"" && 
-			tok.type == TOK_RPAREN);
+			parser_peek(parser).type == TOK_RPAREN);
+		parser_advance(parser);
 		break;
 	case TOK_VAR: case TOK_LIT:
 		lhs = _parse_atom(tok);
@@ -261,6 +279,7 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 		op->value = 0;
 		op->binary.left  = NULL;
 		op->binary.right = NULL;
+
 		// get binding power
 		precedence_t lbp, rbp;
 		if ((lhs->token.type == TOK_VAR || lhs->token.type == TOK_LIT) &&
@@ -295,7 +314,7 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 		}
 		// use recursion to build rhs
 		parser_advance(parser);
-		op->binary.right = _parse_expr(parser, rbp); 
+		op->binary.right = _parse_expr(parser, rbp);
 	}
 	return op;
 }
