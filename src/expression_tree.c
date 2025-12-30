@@ -4,9 +4,12 @@
 
 typedef char precedence_t;
 // static helpers declaration
+// lexical error handling
 static inline int _expr_error_idx(Token *expr, size_t length);
+// binding power assignment
 static inline void _prefix_bp(precedence_t *lbp, precedence_t *rbp, Token token);
 static inline void _infix_bp(precedence_t *lbp, precedence_t *rbp, Token token);
+// expression parsing
 static inline ExpressionTree _parse_atom(Token tok);
 static inline ExpressionTree _parse_prefix(Token tok, Parser *parser, precedence_t curr_bp);
 static inline ExpressionTree _parse_postfix(ExpressionTree operator, ExpressionTree lhs);
@@ -53,17 +56,19 @@ void expressiontree_print_to_file(FILE *fp, int depth, ExpressionTree root)
 {
 	assert(fp);
 	if (root) {
-
+		// %*s (pad * of spaces in front of string s), %.*s (print at most * characters of string)
 		if (depth > 0) {
-			fprintf(fp, "%*s%*s", 
-					depth, " ",
-					depth, "|__");
+			fprintf(fp, "%*s%*s",
+				depth, " ",
+				depth, "|__");
 		}
+
 		if (root->token.type == TOK_VAR || root->token.type == TOK_LIT ) {
 			fprintf(fp, "\"%.*s\"\n", (int)root->token.length, root->token.token_string);
 		} else {
 			fprintf(fp, "\"%s\"\n", operatorSymbolLUT[root->token.type]);
 		}
+
 		expressiontree_print_to_file(fp, depth + 1, root->binary.left);
 		expressiontree_print_to_file(fp, depth + 1, root->binary.right);
 	}
@@ -235,15 +240,16 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 	assert(parser && "parameter parser must be a valid Parser *");
 
 	// make lhs
-	Token tok = parser_peek(parser);	// *parser->curr == tok
+	Token tok = parser_peek(parser);	//  tok ← parser->curr[0]
 	ExpressionTree lhs = NULL;
 	switch (tok.type) {
 	case TOK_LPAREN:
 		// any expression preceeded by a '(' means nesting
+		// build the inner expression first (with recursion)
 		parser_advance(parser);
 		lhs = _parse_expr(parser, curr_bp + 1); 
-		assert("expected to see a ')' after parsing a \"'('expr\"" && 
-			parser_peek(parser).type == TOK_RPAREN);
+		assert(parser_peek(parser).type == TOK_RPAREN && 
+		       "expected to see a ')' after parsing a \"'('expr\"");
 		parser_advance(parser);
 		break;
 	case TOK_VAR: case TOK_LIT:
@@ -260,59 +266,36 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 		}
 		break;
 	default:
-		panic("bad token at _parse_expr");
+		panic("bad token at _parse_expr before loop");
 	}
-	assert(parser_peek(parser).type != TOK_RPAREN);
-	// no ')' in expr below this exact line
+	assert(parser_peek(parser).type != TOK_RPAREN);	 // sanity check, no ")" permitted below this
 
 	// parse the rest of the expression (lhs is completely parsed)
-	// parser->curr should point to an operator at the beginning of each loop iteration
+	// parser->curr[0] should point to an operator before 1st iteration of the loop
 	ExpressionTree op = lhs;
-	while (parser_peek(parser).type != TOK_ERROR && parser_peek(parser).type != TOK_EOF) {
-		tok = parser_peek(parser);	
+	for (tok = parser_peek(parser); tok.type != TOK_ERROR && tok.type != TOK_EOF; tok = parser_peek(parser)) {
+		
 		// build op (an ASTNode holding an operator)
 		op = malloc(sizeof(*op));
 		if (!op) {
 			panic("malloc failed in _parse_expr");
 		}
-		op->token = tok;
-		op->value = 0;
-		op->binary.left  = NULL;
-		op->binary.right = NULL;
+		*op = (ASTNode) {
+			.token = tok,
+			.value = 0,
+			.binary.left = lhs,
+			.binary.right = NULL
+		};
 
 		// get binding power
 		precedence_t lbp, rbp;
-		if ((lhs->token.type == TOK_VAR || lhs->token.type == TOK_LIT) &&
-		     (op->token.type == TOK_INC || op->token.type == TOK_DEC)) {
-			// (TOK_VAR|TOK_LIT) followed by ('++'|'--'): (lhs op) is a postfix expression
-			lhs = _parse_postfix(op, lhs);
-			/* lhs after this point should be
-			 *		('++'|'--')
-			 *		     |	
-			 *		    lhs
-			 */ 		    
-			parser_advance(parser);
-			continue;
-		} else if (op->token.type == TOK_VAR || op->token.type == TOK_LIT) {
-			// implicit multiplication
-			lhs = _parse_postfix(op, lhs);
-			/*  lhs after this point should be
-			 *		'*'
-			 *	       /   \
-			 *	     lhs   op
-			 */ 		    
-			parser_advance(parser);
-			continue;
-		} else {
-			// regular infix operators or error
-			op->binary.left = lhs;
-			_infix_bp(&lbp, &rbp, op->token);
-		}
+		_infix_bp(&lbp, &rbp, op->token);
 
 		if (curr_bp > lbp) {
 			break;
 		}
-		// use recursion to build rhs
+		// use recursion to build rhs, 
+		// make sure parser->curr is at the beginning of rhs expression
 		parser_advance(parser);
 		op->binary.right = _parse_expr(parser, rbp);
 	}
