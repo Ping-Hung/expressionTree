@@ -144,7 +144,7 @@ static inline void _infix_bp(precedence_t *lbp, precedence_t *rbp, Token token)
 		{*lbp = 3, *rbp = 4;}
 		break;
 	default:
-		panic("bad token in _infix_bp");
+		panic("bad token passed to _infix_bp");
 	}
 }
 
@@ -201,6 +201,9 @@ static inline ExpressionTree _parse_prefix(Token tok, Parser *parser, precedence
 	// indirectly recursive (calling _parse_expr)
 	ExpressionTree node = NULL;
 	switch (tok.type) {
+	case TOK_EOF:
+		// base case of an empty node
+		break;
 	case TOK_LIT: case TOK_VAR:
 		node = _parse_atom(tok);
 		break;
@@ -243,6 +246,9 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 	Token tok = parser_peek(parser);	//  tok ← parser->curr[0]
 	ExpressionTree lhs = NULL;
 	switch (tok.type) {
+	case TOK_EOF:	
+		// base case: if given expression is empty, simply return an empty node
+		return NULL;
 	case TOK_LPAREN:
 		// any expression preceeded by a '(' means nesting
 		// build the inner expression first (with recursion)
@@ -274,7 +280,6 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 	// parser->curr[0] should point to an operator before 1st iteration of the loop
 	ExpressionTree op = lhs;
 	for (tok = parser_peek(parser); tok.type != TOK_ERROR && tok.type != TOK_EOF; tok = parser_peek(parser)) {
-		
 		// build op (an ASTNode holding an operator)
 		op = malloc(sizeof(*op));
 		if (!op) {
@@ -298,6 +303,7 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 		// make sure parser->curr is at the beginning of rhs expression
 		parser_advance(parser);
 		op->binary.right = _parse_expr(parser, rbp);
+		lhs = op;
 	}
-	return op;
+	return lhs;
 }
