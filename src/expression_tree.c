@@ -294,6 +294,7 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 		_infix_bp(&lbp, &rbp, op->token);
 
 		if (curr_bp > lbp) {
+			free(op);
 			break;
 		}
 		// use recursion to build rhs, 
