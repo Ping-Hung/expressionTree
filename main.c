@@ -35,7 +35,9 @@ build:
 			input_size);
 	// tokenize input string
 	Tokenizer tkz = tokenizer_tokenize(str, input_size);
-
+#ifdef DEBUG
+	tokenizer_display(&tkz);
+#endif
 	// parse input string
 	ExpressionTree root = expressiontree_build_tree(&tkz);
 	if (root) {
