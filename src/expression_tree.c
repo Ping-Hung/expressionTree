@@ -3,12 +3,15 @@
 #include "../headers/Parser.h"
 
 typedef char precedence_t;
+
 // static helpers declaration
 // lexical error handling
 static inline int _expr_error_idx(Token *expr, size_t length);
+
 // binding power assignment
 static inline void _prefix_bp(precedence_t *lbp, precedence_t *rbp, Token token);
 static inline void _infix_bp(precedence_t *lbp, precedence_t *rbp, Token token);
+
 // expression parsing
 static inline ExpressionTree _parse_atom(Parser *parser, precedence_t curr_bp);
 static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp);
@@ -152,7 +155,17 @@ static inline void _infix_bp(precedence_t *lbp, precedence_t *rbp, Token token)
 
 static inline ExpressionTree _parse_atom(Parser *parser, precedence_t curr_bp)
 {
-	// Atom := TOK_LIT | TOK_VAR | '(' expr ')'
+	/*
+	 *	Atom := TOK_LIT | TOK_VAR | '(' expr ')'
+	 *	1) case TOK_LIT|TOK_VAR: 
+	 *		node ← LIT_Node | VAR_Node
+	 *	   case '(':
+	 *	  	advance parser past '('
+	 *	  	node ← _parse_expr(parser, 0)
+	 *	  	advance parser past ')'
+	 *	2) advance parser past the token
+	 *	3) return node
+	 */
 	// indirectly recursive
 	ExpressionTree node = NULL;
 	switch (parser_peek(parser).type) {
@@ -193,6 +206,7 @@ static inline ExpressionTree _parse_atom(Parser *parser, precedence_t curr_bp)
 static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
 {
 	ExpressionTree node = NULL;
+	precedence_t lbp, rbp;
 	// the first token of a prefix expression is one of {'+', '-', '++', '--'}
 	switch (parser_peek(parser).type) {
 	case TOK_ADD: case TOK_MINUS: case TOK_INC: case TOK_DEC:
@@ -205,10 +219,10 @@ static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
 		node->binary.right = NULL; // init this field to prevent memory fault in traversals
 
 		parser_advance(parser);
+		_prefix_bp(&lbp, &rbp, node->token);
 		// what follows an operator is, in the most general sense, an expression
-		node->binary.left = _parse_expr(parser, curr_bp);
+		node->unary.operand = _parse_expr(parser, rbp);
 
-		parser_advance(parser);
 		break;
 	default:
 		panic("expecting one of {'+', '-', '++', '--'} as the first token of a prefix expression");
@@ -222,11 +236,17 @@ static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
 
 static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 {
-	/*  _parse_expr will handle general expressions, assume infix by default.
-	 *  Roughly breaking expression (expr) down to 3 sections, 
-	 *  		 expr := lhs op rhs
-	 *  Use (indirect + direct) recursion to parse this entire thing, build 
-	 *  lhs up gradually.
+	/*  
+	 *  _parse_expr will handle general expressions, assume infix by default.
+	 *  		expr := expr op expr
+	 *  1) Build up 1st expr, store it in lhs
+	 *  2) Advance and see if op expr exists, if so, build 
+	 *  			op
+	 *  		       /   
+	 *  		     lhs
+	 *  	and recursively build op->binary.right with _parse_expr
+	 *  3) lhs ← op
+	 *  4) return lhs
 	 */ 
 	assert(parser && "parameter parser must be a valid Parser *");
 	precedence_t lbp, rbp;
@@ -250,17 +270,12 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 		panic("bad token at _parse_expr before loop");
 	}
 
-	// parser->curr[0] is the last token of lhs at this point
-	if (parser_peek(parser).type == TOK_RPAREN) {
-		parser_advance(parser);
-	}
+	// parser->curr[0] is the last token of lhs at this point (which should not be a ')')
 	assert("no ')' before loop" && parser_peek(parser).type != TOK_RPAREN);
 
 	// parse the rest of the expression (lhs is completely parsed)
 	// parser->curr should point to an operator token
-	for (Token tok = parser_peek(parser); tok.type != TOK_ERROR && tok.type != TOK_EOF;
-	     tok = parser_peek(parser)) {
-
+	for (Token tok = parser_peek(parser); tok.type != TOK_ERROR && tok.type != TOK_EOF; tok = parser_peek(parser)) {
 		// build op (an ASTNode holding an operator)
 		ExpressionTree op = malloc(sizeof(*op));
 		if (!op) {
