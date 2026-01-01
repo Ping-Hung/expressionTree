@@ -80,6 +80,9 @@ Assume `gcc` and `Make` are available on the machine.
 ```
 	make clean
 ```
-
+# Inspirations and References
+1. https://github.com/PixelRifts/math-expr-evaluator/tree/master
+2. https://craftinginterpreters.com
+3. https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
 
 
