@@ -156,17 +156,17 @@ static inline void _infix_bp(precedence_t *lbp, precedence_t *rbp, Token token)
 static inline ExpressionTree _parse_atom(Parser *parser, precedence_t curr_bp)
 {
 	/*
-	 *	Atom := TOK_LIT | TOK_VAR | '(' expr ')'
-	 *	1) case TOK_LIT|TOK_VAR: 
-	 *		node ← LIT_Node | VAR_Node
-	 *	   case '(':
-	 *	  	advance parser past '('
-	 *	  	node ← _parse_expr(parser, 0)
-	 *	  	advance parser past ')'
-	 *	2) advance parser past the token
-	 *	3) return node
+	 *   Atom := TOK_LIT | TOK_VAR | '(' expr ')'
+	 *	  1) case TOK_LIT|TOK_VAR: 
+	 *	  	node ← LIT_Node | VAR_Node
+	 *	     case '(':
+	 *	    	advance parser past '('
+	 *	    	node ← _parse_expr(parser, 0)
+	 *	    	advance parser past ')'
+	 *	  2) advance parser past the token
+	 *	  3) return node
+	 *    makes call to _parse_expr, which could call _parse_atom (indirectly recursive)
 	 */
-	// indirectly recursive
 	ExpressionTree node = NULL;
 	switch (parser_peek(parser).type) {
 	// base cases: EOF | TOK_VAR | TOK_LIT
@@ -189,15 +189,9 @@ static inline ExpressionTree _parse_atom(Parser *parser, precedence_t curr_bp)
 		// recursive case: 
 		parser_advance(parser);
 		node = _parse_expr(parser, 0);
-		parser_advance(parser);	// move parser->curr past the last token of parenthesized expr
 		break;
 	default:
 		panic("expecting TOK_VAR|TOK_LIT|'(' as the first token in _parse_atom");
-	}
-
-	if (parser_peek(parser).type == TOK_RPAREN) {
-		// move past ')'
-		parser_advance(parser);
 	}
 
 	return node;
@@ -228,9 +222,6 @@ static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
 		panic("expecting one of {'+', '-', '++', '--'} as the first token of a prefix expression");
 	}
 
-	if (parser_peek(parser).type == TOK_RPAREN) {
-		parser_advance(parser);
-	}
 	return node;
 }
 
@@ -268,6 +259,13 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 		break;
 	default:
 		panic("bad token at _parse_expr before loop");
+	}
+
+	if (parser_peek(parser).type == TOK_RPAREN) {
+		// indicates that we are looking at the end of a grouped (parenthesized) expression
+		// advance parser then return to the caller
+		parser_advance(parser);
+		return lhs;
 	}
 
 	// parser->curr[0] is the last token of lhs at this point (which should not be a ')')
