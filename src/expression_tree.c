@@ -305,7 +305,7 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 			};
 			op->binary.right = lhs;
 			lhs = op;
-			break;
+			continue;
 		}
 
 		// get binding power of the operator
