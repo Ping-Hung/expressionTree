@@ -43,8 +43,16 @@ This differs from regular programming language grammar for which above syntax co
 
 # Compile/Build Instructions
 - If an `ExpressionTree` is built successfully, it will be printed onto a file named `parseTree.txt` in this directory.
-  - `parseTree.txt` will display the pre-order printing of the `ExpressionTree`, indentations will mark the "depth" of each node 
-  (2 nodes with same indentations meant they are on the same level (and are siblings)).
+  - `parseTree.txt` will display the pre-order printing of the `ExpressionTree`. A node's child is placed below itself, preceed with the symbol `|__`.
+  - As an example, the AST for expression `(a + b) / 2` will look like
+  ```
+	"/"
+	 |__"+"
+	  |__"a"
+	  |__"b"
+	 |__"2"
+
+  ```
 
 
 Assume `gcc` and `Make` are available on the machine.
