@@ -3,7 +3,7 @@ This is an attempt to create a simple scanner (tokenizer) and parser that builds
 
 # Lexical Symbols:
 The tokenizer recognizes the following as valid symbols: 
-- variables (regex `[A-Za-z_]+[A-Za-z0-9_]$`) 
+- variables (regex `^[A-Za-z_]+[A-Za-z0-9_]$`) 
 - integral numeric literals (regex `^[0-9]+$`)
 - operators (one of `{'+', '-', '*', '/', '%', '++', '--'}`)
 
@@ -43,7 +43,8 @@ This differs from regular programming language grammar for which above syntax co
 
 # Compile/Build Instructions
 - If an `ExpressionTree` is built successfully, it will be printed onto a file named `parseTree.txt` in this directory.
-  - `parseTree.txt` will display the pre-order printing of the `ExpressionTree`. A node's child is placed below itself, preceed with the symbol `|__`.
+  - `parseTree.txt` will display the pre-order printing of the `ExpressionTree`. A node's child is placed below itself, preceed with a space and the symbol `|__`.
+  - notice that 2 children are siblings (on the same level of the entire AST) if their `|__` symbols line up with each other.
   - As an example, the AST for expression `(a + b) / 2` will look like
   ```
 	"/"
@@ -51,7 +52,6 @@ This differs from regular programming language grammar for which above syntax co
 	  |__"a"
 	  |__"b"
 	 |__"2"
-
   ```
 
 
@@ -92,5 +92,6 @@ Assume `gcc` and `Make` are available on the machine.
 1. https://github.com/PixelRifts/math-expr-evaluator/tree/master
 2. https://craftinginterpreters.com
 3. https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
+
 
 
