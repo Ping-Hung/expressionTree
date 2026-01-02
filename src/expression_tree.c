@@ -274,14 +274,14 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 	// parse the rest of the expression (lhs is completely parsed)
 	// parser->curr should point to an operator token
 	for (Token tok = parser_peek(parser); tok.type != TOK_ERROR && tok.type != TOK_EOF; tok = parser_peek(parser)) {
-		// build op (an ASTNode holding an operator)
 		if (tok.type == TOK_RPAREN) {
-			// to handle cases with extra parentheses around an expression, it's ugly
+			// handle cases with extra parentheses around an expression, it's ugly
 			// and I do want a more elegant solution
 			parser_advance(parser);
 			continue;
 		}
 
+		// build op (an ASTNode holding an operator)
 		ExpressionTree op = malloc(sizeof(*op));
 		if (!op) {
 			panic("malloc failed in _parse_expr");
