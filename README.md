@@ -72,6 +72,7 @@ This differs from regular programming language grammar for which above syntax co
 	  |__"b"
 	 |__"2"
   ```
+
 - Implicit mulitiplication is still under work.
 	- Currently, expression `2 a` and `a 2` will be represented as 
 	```
@@ -87,6 +88,11 @@ Assume `gcc` and `Make` are available on the machine.
 - refer to `Makefile` for build, test, and clean instructions.
 - On successful builds, an executable named `expressionTree` will be present in the working directory.
 - if `valgrind` is installed on the machine, `make valgrind` will run the executable with valgrind to check for memory errors.
+
+# Design Notes (basically a TODO/TOFIX/TOIMPROVE section for me)
+## Parser State Machine
+![state machine image](parser_state_machine.png)
+This is a depiction of how a expressione would be parsed as a state machine, start state is `parse_expr`.
 
 ## Rules Summary
 

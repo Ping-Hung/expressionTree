@@ -229,14 +229,17 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 {
 	/*  
 	 *  _parse_expr will handle general expressions, assume infix by default.
+	 *  This function is the beginning of all kinds of expression parsing.
 	 *  			expr := expr op expr
 	 *  1) Build up 1st expr, store it in lhs
 	 *  	- look at lhs's first token and deduce its semantic meaning
+	 *
 	 *  2) Advance and see if op expr exists, if so, build 
 	 *  			op
 	 *  		       /   
 	 *  		     lhs
 	 *  	and recursively build op->binary.right with _parse_expr
+	 *
 	 *  3) lhs ← op
 	 *  4) return lhs
 	 */ 
