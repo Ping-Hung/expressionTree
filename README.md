@@ -35,6 +35,24 @@ The tokenizer recognizes the following as valid symbols:
 			TOK_LIT	:= ^[0-9]+$
 ```
 
+## Left Recursion Eliminated Grammar
+```
+					expr 	:= Mult+ (['+'|'-'] Mult)*
+
+					Mult 	:= Unary+ (['*'|'/'|'%'] Unary)* 
+						|  Unary+ Atom?
+
+					Unary	:= ['+'|'-']* IncDec+
+
+					IncDec  := ['++'|'--']* Atom+
+						|  Atom+ ['++'|'--']*
+
+					Atom	:= TOK_LIT | TOK_VAR | '(' expr ')'
+
+					TOK_LIT	:= ^[0-9]+$
+					TOK_VAR	:= ^[A-Za-z]+[_A-Za-z0-9]*$
+```
+
 - **Note**: implicit multiplication is supported via the syntax 
 ``` 
 	(TOK_LIT|TOK_VAR) <space> (TOK_LIT|TOK_VAR) 

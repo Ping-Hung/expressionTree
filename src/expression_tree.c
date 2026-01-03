@@ -229,8 +229,9 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 {
 	/*  
 	 *  _parse_expr will handle general expressions, assume infix by default.
-	 *  		expr := expr op expr
+	 *  			expr := expr op expr
 	 *  1) Build up 1st expr, store it in lhs
+	 *  	- look at lhs's first token and deduce its semantic meaning
 	 *  2) Advance and see if op expr exists, if so, build 
 	 *  			op
 	 *  		       /   
@@ -246,7 +247,7 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 	ExpressionTree lhs = NULL;
 	switch (parser_peek(parser).type) {
 	case TOK_EOF:	
-	// base case: if given expression is empty, simply return an empty node
+		// base case: empty expr ⇒  empty node (Ø)
 		return NULL;
 	case TOK_VAR: case TOK_LIT: case TOK_LPAREN:
 		// Atom := TOK_LIT | TOK_VAR | '(' expr ')'
@@ -257,8 +258,11 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 		_prefix_bp(&lbp, &rbp, parser_peek(parser));
 		lhs = _parse_prefix(parser, rbp);
 		break;
+	case TOK_RPAREN:
+		parser_advance(parser);
+		return lhs;
 	default:
-		panic("bad token at _parse_expr before loop");
+		panic("bad token at _parse_expr");
 	}
 
 	if (parser_peek(parser).type == TOK_RPAREN) {

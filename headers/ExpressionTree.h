@@ -22,7 +22,7 @@ typedef struct ASTNode {
 typedef ASTNode *ExpressionTree;
 
 #define NAN 0xffUL << 23 | 1	// a (bit) pattern resembling a not-a-number 32-bit float by IEEE-754
-#define panic(msg) {fprintf(stderr, "%s at line %d, file %s\n", msg, __LINE__, __FILE__); assert(false);}
+#define panic(msg) {fprintf(stderr, "%s on line %d of %s\n", msg, __LINE__, __FILE__); assert(false);}
 
 ExpressionTree expressiontree_build_tree(Tokenizer *tkz);
 void expressiontree_print_to_file(FILE *fp, int depth, ExpressionTree root);
