@@ -258,9 +258,6 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 		_prefix_bp(&lbp, &rbp, parser_peek(parser));
 		lhs = _parse_prefix(parser, rbp);
 		break;
-	case TOK_RPAREN:
-		parser_advance(parser);
-		return lhs;
 	default:
 		panic("bad token at _parse_expr");
 	}
