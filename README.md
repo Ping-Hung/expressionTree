@@ -92,7 +92,7 @@ Assume `gcc` and `Make` are available on the machine.
 # Design Notes (basically a TODO/TOFIX/TOIMPROVE section for me)
 ## Parser State Machine
 ![state machine image](parser_state_machine.png)
-This is a depiction of how a expressione would be parsed as a state machine
+This is a depiction of how an expression would be parsed using a state machine
 - start state is `parse_expr`.
 - possible end states are `Panic!/Error` and `Parse Complete`
 
@@ -127,6 +127,7 @@ This is a depiction of how a expressione would be parsed as a state machine
 1. https://github.com/PixelRifts/math-expr-evaluator/tree/master
 2. https://craftinginterpreters.com
 3. https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
+
 
 
 
