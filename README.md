@@ -9,48 +9,48 @@ The tokenizer recognizes the following as valid symbols:
 
 # Grammar:
 ```
-			expr	:=  expr '+' Mult
-				|   expr '-' Mult
-				|   Mult
+		expr	:=  expr '+' Mult
+			|   expr '-' Mult
+			|   Mult
 
-			Mult	:= Mult '*' Unary
-				|  Mult '/' Unary
-				|  Mult '%' Unary
-				|  Mult Atom
-				|  Unary
+		Mult	:= Mult '*' Unary
+			|  Mult '/' Unary
+			|  Mult '%' Unary
+			|  Mult Atom
+			|  Unary
 
-			Unary	:= '+' Unary
-				|  '-' Unary
-				|  IncDec
+		Unary	:= '+' Unary
+			|  '-' Unary
+			|  IncDec
 
-			IncDec  := '++' IncDec
-				|  '--' IncDec
-				|  IncDec '++'
-				|  IncDec '--'
-				|  Atom
+		IncDec  := '++' IncDec
+			|  '--' IncDec
+			|  IncDec '++'
+			|  IncDec '--'
+			|  Atom
 
-			Atom	:= TOK_LIT | TOK_VAR | '(' expr ')'
+		Atom	:= TOK_LIT | TOK_VAR | '(' expr ')'
 
-			TOK_VAR	:= ^[A-Za-z]+[_A-Za-z0-9]*$
-			TOK_LIT	:= ^[0-9]+$
+		TOK_VAR	:= ^[A-Za-z]+[_A-Za-z0-9]*$
+		TOK_LIT	:= ^[0-9]+$
 ```
 
 ## Left Recursion Eliminated Grammar
 ```
-					expr 	:= Mult+ (['+'|'-'] Mult)*
+			expr 	:= Mult+ (['+'|'-'] Mult)*
 
-					Mult 	:= Unary+ (['*'|'/'|'%'] Unary)* 
-						|  Unary+ Atom?
+			Mult 	:= Unary+ (['*'|'/'|'%'] Unary)* 
+				|  Unary+ Atom?
 
-					Unary	:= ['+'|'-']* IncDec+
+			Unary	:= ['+'|'-']* IncDec+
 
-					IncDec  := ['++'|'--']* Atom+
-						|  Atom+ ['++'|'--']*
+			IncDec  := ['++'|'--']* Atom+
+				|  Atom+ ['++'|'--']*
 
-					Atom	:= TOK_LIT | TOK_VAR | '(' expr ')'
+			Atom	:= TOK_LIT | TOK_VAR | '(' expr ')'
 
-					TOK_LIT	:= ^[0-9]+$
-					TOK_VAR	:= ^[A-Za-z]+[_A-Za-z0-9]*$
+			TOK_LIT	:= ^[0-9]+$
+			TOK_VAR	:= ^[A-Za-z]+[_A-Za-z0-9]*$
 ```
 
 - **Note**: implicit multiplication is supported via the syntax 
@@ -59,9 +59,10 @@ The tokenizer recognizes the following as valid symbols:
 ```
 This differs from regular programming language grammar for which above syntax could mean `(TOK_LIT|TOK_VAR)` initialization.
 
-# Compile/Build Instructions
-- If an `ExpressionTree` is built successfully, it will be printed onto a file named `parseTree.txt` in this directory.
-  - `parseTree.txt` will display the pre-order printing of the `ExpressionTree`. A node's child is placed below itself, preceed with a space and the symbol `|__`.
+# Output (parseTree.txt)
+- The output is a simple visual display of the AST. Specifically, a pre-order tree-walk of the AST.
+- An ASTNode is either a `TOK_LIT`, a `TOK_VAR`, or an operator surrounded by `""`.
+- A node's child is placed below itself, preceed with a space and the symbol `|__`.
   - notice that 2 children are siblings (on the same level of the entire AST) if their `|__` symbols line up with each other.
   - As an example, the AST for expression `(a + b) / 2` will look like
   ```
@@ -71,7 +72,15 @@ This differs from regular programming language grammar for which above syntax co
 	  |__"b"
 	 |__"2"
   ```
-
+- Implicit mulitiplication is still under work.
+	- Currently, expression `2 a` and `a 2` will be represented as 
+	```
+	  "a"				"2"	
+	   |__"2"   	 		 |__ "a"
+	```
+	- The former tree rooted at `"a"` has `"2"` as its only child, and the latter is rooted at `"a"`, taking `"2"` as its only child
+# Compile/Build Instructions
+- If an `ExpressionTree` is built successfully, it will be printed onto a file named `parseTree.txt` in this directory.
 
 Assume `gcc` and `Make` are available on the machine.
 
@@ -110,6 +119,7 @@ Assume `gcc` and `Make` are available on the machine.
 1. https://github.com/PixelRifts/math-expr-evaluator/tree/master
 2. https://craftinginterpreters.com
 3. https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
+
 
 
 
