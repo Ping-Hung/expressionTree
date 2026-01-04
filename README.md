@@ -91,7 +91,7 @@ Assume `gcc` and `Make` are available on the machine.
 
 # Design Notes (basically a TODO/TOFIX/TOIMPROVE section for me)
 ## Parser State Machine
-![state machine image](parser_state_machine.png)
+![state machine image](state_machine_parser.png)
 This is a depiction of how a expressione would be parsed as a state machine, start state is `parse_expr`.
 
 ## Rules Summary
