@@ -106,7 +106,7 @@ void tokenizer_display(Tokenizer *a_tkz)
 		       "		}\n",
 		       (int)a_tkz->tokens[i].length, a_tkz->tokens[i].token_string,
 		       a_tkz->tokens[i].length,
-		      tok_types[a_tkz->tokens[i].type]);
+		       tok_types[a_tkz->tokens[i].type]);
 	}
 
 	printf("}\n");
