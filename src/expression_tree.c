@@ -278,13 +278,6 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 	// parse the rest of the expression (lhs is completely parsed)
 	// parser->curr should point to an operator token
 	for (Token tok = parser_peek(parser); tok.type != TOK_ERROR && tok.type != TOK_EOF; tok = parser_peek(parser)) {
-		if (tok.type == TOK_RPAREN) {
-			// handle cases with extra parentheses around an expression, it's ugly
-			// and I do want a more elegant solution
-			parser_advance(parser);
-			continue;
-		}
-
 		// build op (an ASTNode holding an operator)
 		ExpressionTree op = malloc(sizeof(*op));
 		if (!op) {
@@ -305,9 +298,10 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 			continue;
 		} 
 
-		if (op->token.type == TOK_LPAREN) {
-			// need to parse the parenthsized expression first with recursion
-			// lhs '('... means lhs multiplied by '('...
+		if (op->token.type == TOK_LPAREN || 
+		    op->token.type == TOK_VAR || op->token.type == TOK_LIT) {
+			// implicit multiplication cases:
+			// 	lhs '(' expr ')' | lhs TOK_LIT | lhs TOK_VAR
 			lhs = _parse_expr(parser, 0);
 			op->token = (Token) {
 				.type = TOK_MULT, 
@@ -332,6 +326,12 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 		parser_advance(parser);
 		op->binary.right = _parse_expr(parser, rbp);
 		lhs = op;
+
+		if (parser_peek(parser).type == TOK_RPAREN) {
+			// Seeing an ')' after parsing rhs, this meant rhs is a nested expression, so move past the ')'
+			// alternative: change the for (...) condition so looping stops when ')' is seen
+			parser_advance(parser);
+		}
 	}
 	return lhs;
 }
