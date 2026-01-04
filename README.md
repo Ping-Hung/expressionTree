@@ -41,6 +41,11 @@ The tokenizer recognizes the following as valid symbols:
 ```
 This differs from regular programming language grammar for which above syntax could mean `(TOK_LIT|TOK_VAR)` initialization.
 
+## Operator Precedence in Above Grammar
+```
+	("+"|"-") < ("*"|"/"|"%") < ("++"|"--")
+```
+
 # Output (parseTree.txt)
 - The output is a simple visual display of the AST. Specifically, a pre-order tree-walk of the AST.
 - An ASTNode is either a `TOK_LIT`, a `TOK_VAR`, or an operator surrounded by `""`.
