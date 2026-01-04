@@ -73,13 +73,13 @@ This differs from regular programming language grammar for which above syntax co
 	 |__"2"
   ```
 
-- Implicit mulitiplication is still under work.
-	- Currently, expression `2 a` and `a 2` will be represented as 
+- Implicit mulitiplication will be handled by manually making an extra `*` node between the two operands.
+	- The expression `2 a` and `a 2` will thus become
 	```
-	  "a"				"2"	
-	   |__"2"   	 		 |__ "a"
+		"*"		"*"
+		 |__"2"		 |__"a"
+		 |__"a"		 |__"2"
 	```
-	- The former tree rooted at `"a"` has `"2"` as its only child, and the latter is rooted at `"a"`, taking `"2"` as its only child
 # Compile/Build Instructions
 - If an `ExpressionTree` is built successfully, it will be printed onto a file named `parseTree.txt` in this directory.
 

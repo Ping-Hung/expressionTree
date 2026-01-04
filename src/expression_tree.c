@@ -295,6 +295,9 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 			// (lhs op) is a postfix expression that may follow an operator
 			lhs = op;
 			parser_advance(parser);
+			if (parser_peek(parser).type == TOK_RPAREN) {
+				parser_advance(parser);
+			}
 			continue;
 		} 
 
@@ -308,8 +311,13 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 				.token_string = "*",
 				.length = 1
 			};
+
 			op->binary.right = lhs;
 			lhs = op;
+
+			if (parser_peek(parser).type == TOK_RPAREN) {
+				parser_advance(parser);
+			}
 			continue;
 		}
 
