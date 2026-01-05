@@ -44,7 +44,7 @@ ExpressionTree expressiontree_build_tree(Tokenizer *tkz)
 	return root;
 }
 
-char const *operatorSymbolLUT[] = {
+static char const *operatorSymbolLUT[] = {
 	[TOK_ADD] 	= "+",
 	[TOK_MINUS]	= "-",
 	[TOK_MULT]	= "*",
@@ -295,14 +295,11 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 			// (lhs op) is a postfix expression that may follow an operator
 			lhs = op;
 			parser_advance(parser);
-			if (parser_peek(parser).type == TOK_RPAREN) {
-				parser_advance(parser);
-			}
-			continue;
+			goto next_iter_prep;
 		} 
 
 		if (op->token.type == TOK_LPAREN || 
-		    op->token.type == TOK_VAR || op->token.type == TOK_LIT) {
+				op->token.type == TOK_VAR || op->token.type == TOK_LIT) {
 			// implicit multiplication cases:
 			// 	lhs '(' expr ')' | lhs TOK_LIT | lhs TOK_VAR
 			lhs = _parse_expr(parser, 0);
@@ -314,11 +311,7 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 
 			op->binary.right = lhs;
 			lhs = op;
-
-			if (parser_peek(parser).type == TOK_RPAREN) {
-				parser_advance(parser);
-			}
-			continue;
+			goto next_iter_prep;
 		}
 
 		// get binding power of the operator
@@ -334,7 +327,7 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 		parser_advance(parser);
 		op->binary.right = _parse_expr(parser, rbp);
 		lhs = op;
-
+next_iter_prep:
 		if (parser_peek(parser).type == TOK_RPAREN) {
 			// Seeing an ')' after parsing rhs, this meant rhs is a nested expression, so move past the ')'
 			// alternative: change the for (...) condition so looping stops when ')' is seen

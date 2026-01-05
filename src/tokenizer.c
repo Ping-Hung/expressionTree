@@ -52,7 +52,7 @@ Tokenizer tokenizer_tokenize(char const *input, size_t length)
 		case TOK_MULT: case TOK_DIV: case TOK_MOD:
 			tok = _tok_make_mult_div_mod(tok);
 			break;
-		// "ends on the spot" (i.e. no further consuming, type is dertermined)
+		// "ends on the spot" (i.e. consume no further, type is dertermined)
 		case TOK_LPAREN: case TOK_RPAREN: case TOK_LIT: case TOK_EOF: 
 			break;
 		default:
