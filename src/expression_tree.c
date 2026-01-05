@@ -278,8 +278,9 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 	// parse the rest of the expression (lhs is completely parsed)
 	// parser->curr should point to an operator token
 	while (parser_peek(parser).type != TOK_ERROR && 
-	       parser_peek(parser).type != TOK_EOF   &&
+	       parser_peek(parser).type != TOK_EOF && 
 	       parser_peek(parser).type != TOK_RPAREN) {
+
 		Token tok = parser_peek(parser);
 		// build op (an ASTNode holding an operator)
 		ExpressionTree op = malloc(sizeof(*op));
@@ -294,15 +295,13 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 			.binary.right = NULL
 		};
 
-		if (op->token.type == TOK_INC || op->token.type == TOK_DEC) {
+		switch (op->token.type) {
+		case TOK_INC: case TOK_DEC:
 			// (lhs op) is a postfix expression that may follow an operator
 			lhs = op;
 			parser_advance(parser);
-			goto next_iter_prep;
-		} 
-
-		if (op->token.type == TOK_LPAREN || 
-				op->token.type == TOK_VAR || op->token.type == TOK_LIT) {
+			continue;
+		case TOK_LPAREN: case TOK_VAR: case TOK_LIT:
 			// implicit multiplication cases:
 			// 	lhs '(' expr ')' | lhs TOK_LIT | lhs TOK_VAR
 			lhs = _parse_expr(parser, 0);
@@ -314,7 +313,9 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 
 			op->binary.right = lhs;
 			lhs = op;
-			goto next_iter_prep;
+			continue;
+		default:
+			break;
 		}
 
 		// get binding power of the operator
@@ -330,12 +331,6 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 		parser_advance(parser);
 		op->binary.right = _parse_expr(parser, rbp);
 		lhs = op;
- next_iter_prep:
-		if (parser_peek(parser).type == TOK_RPAREN) {
-			// Seeing an ')' after parsing rhs, this meant rhs is a nested expression, so move past the ')'
-			// alternative: change the for (...) condition so looping stops when ')' is seen
-			parser_advance(parser);
-		}
 	}
 	return lhs;
 }
