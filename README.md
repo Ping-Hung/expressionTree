@@ -55,14 +55,21 @@ This differs from regular programming language grammar for which above syntax co
   should be parsed as
 
   ```
-  	"*"	"*"
-	 |__"a"	 |__"++"	
-	 |__"++"  |__"a"
-	  |__"b" |__"b"
+		"*"
+		 |__"a"
+		 |__"++"
+		  |__"b"
+  ```
+  and
+  ```
+			"*"
+			 |__"++"
+			  |__"a"
+			 |__"b"
   ```
 - The current implementation didn't parse them as above, sadly, and fixing the current implementation so that
   it parses correctly (adheres to most programming language's design (although not many of them supports
-  implicit multiplication)
+  implicit multiplication)) would be the next patch
 
 
 # Output (parseTree.txt)
@@ -128,6 +135,7 @@ Assume `gcc` and `Make` are available on the machine.
 1. https://github.com/PixelRifts/math-expr-evaluator/tree/master
 2. https://craftinginterpreters.com
 3. https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
+
 
 
 
