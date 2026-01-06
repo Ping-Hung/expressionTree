@@ -1,13 +1,18 @@
 # ExpressionTree
 This is an attempt to create a simple scanner (tokenizer) and parser that builds a parse tree from a user specified mathematical expression.
 
-# Lexical Symbols:
+# Lexical Symbols
 The tokenizer recognizes the following as valid symbols: 
 - variables (regex `^[A-Za-z_]+[A-Za-z0-9_]$`) 
 - integral numeric literals (regex `^[0-9]+$`)
-- operators (one of `{'+', '-', '*', '/', '%', '++', '--'}`)
+- operators (one of `{'+', '-', '*', '/', '%', '++', '--'}`) 
+
+Put it simply, this section describes what symbols are going to be recognized as "meaningful" tokens using
+regex. 
 
 # Grammar:
+- The following context free grammar defines how the lexical symbols could be ordered to form meaningful
+  mathematical expression.
 ```
 		expr	:=  expr '+' Mult
 			|   expr '-' Mult
@@ -45,6 +50,20 @@ This differs from regular programming language grammar for which above syntax co
 ```
 	("+"|"-") < ("*"|"/"|"%") < ("++"|"--")
 ```
+## Note on `IncDec` (`++` or `--`)
+- They are right associative and have the highest precedence, meaning that expression `a b ++` and `++ a b`
+  should be parsed as
+
+  ```
+  	"*"	"*"
+	 |__"a"	 |__"++"	
+	 |__"++"  |__"a"
+	  |__"b" |__"b"
+  ```
+- The current implementation didn't parse them as above, sadly, and fixing the current implementation so that
+  it parses correctly (adheres to most programming language's design (although not many of them supports
+  implicit multiplication)
+
 
 # Output (parseTree.txt)
 - The output is a simple visual display of the AST. Specifically, a pre-order tree-walk of the AST.
@@ -68,19 +87,6 @@ This differs from regular programming language grammar for which above syntax co
 		 |__"a"		 |__"2"
 	```
 
-# Design Notes
-## Lexer State Machine
-![lexer state machine image](state_machine_lexer.png)
-Above depicted the (ideal) lexing process with a state machine
-- Start state is `Start`
-- An empty string (symbol) is denoted with the greek letter `ε`
-- Possible end states are `Lex_Success` and `Lex_Error`
-
-## Parser State Machine
-![parser state machine image](state_machine_parser.png)
-Above is a depiction of how an expression would be parsed using a state machine
-- start state is `parse_expr`.
-- possible end states are `Panic!/Error` and `Parse Complete`
 
 # Compile/Build Instructions
 - If an `ExpressionTree` is built successfully, it will be printed onto a file named `parseTree.txt` in this directory.
