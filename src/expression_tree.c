@@ -36,6 +36,7 @@ ExpressionTree expressiontree_build_tree(Tokenizer *tkz)
 			fprintf(stderr, "expression \"%.*s\" has invalid pairs of parentheses\n",
 					expr_len, expr);
 		}
+		fprintf(stderr, "no parse tree was built.\n");
 		return NULL;
 	}
 	// actual parsing
@@ -278,10 +279,9 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 	// parse the rest of the expression (lhs is completely parsed)
 	// parser->curr should point to an operator token
 	while (parser_peek(parser).type != TOK_ERROR && 
-	       parser_peek(parser).type != TOK_EOF && 
+	       parser_peek(parser).type != TOK_EOF   &&  
 	       parser_peek(parser).type != TOK_RPAREN) {
 
-		Token tok = parser_peek(parser);
 		// build op (an ASTNode holding an operator)
 		ExpressionTree op = malloc(sizeof(*op));
 		if (!op) {
@@ -289,7 +289,7 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 		}
 
 		*op = (ASTNode) {
-			.token = tok,
+			.token = parser_peek(parser),
 			.value = 0,
 			.binary.left = lhs,
 			.binary.right = NULL

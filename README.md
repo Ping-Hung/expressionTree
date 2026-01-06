@@ -67,6 +67,7 @@ This differs from regular programming language grammar for which above syntax co
 		 |__"2"		 |__"a"
 		 |__"a"		 |__"2"
 	```
+
 # Design Notes
 ## Lexer State Machine
 ![lexer state machine image](state_machine_lexer.png)
