@@ -304,7 +304,8 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 		case TOK_LPAREN: case TOK_VAR: case TOK_LIT:
 			// implicit multiplication cases:
 			// 	lhs '(' expr ')' | lhs TOK_LIT | lhs TOK_VAR
-			lhs = _parse_expr(parser, 0);
+			// Notice they are all atoms (call _parse_atom (this preserves left associativity)
+			lhs = _parse_atom(parser, 0);
 			op->token = (Token) {
 				.type = TOK_MULT, 
 				.token_string = "*",
