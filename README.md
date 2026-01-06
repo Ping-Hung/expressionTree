@@ -61,7 +61,7 @@ This differs from regular programming language grammar for which above syntax co
   ```
 
 - Implicit mulitiplication will be handled by manually making an extra `*` node between the two operands.
-	- The expression `2 a` and `a 2` will thus become
+	- Expressions`2 a` and `a 2` will thus become
 	```
 		"*"		"*"
 		 |__"2"		 |__"a"
@@ -72,7 +72,7 @@ This differs from regular programming language grammar for which above syntax co
 ![lexer state machine image](state_machine_lexer.png)
 Above depicted the (ideal) lexing process with a state machine
 - Start state is `Start`
-- An empty string (symbol) is denoted with the greek letter ε
+- An empty string (symbol) is denoted with the greek letter `ε`
 - Possible end states are `Lex_Success` and `Lex_Error`
 
 ## Parser State Machine
@@ -121,6 +121,7 @@ Assume `gcc` and `Make` are available on the machine.
 1. https://github.com/PixelRifts/math-expr-evaluator/tree/master
 2. https://craftinginterpreters.com
 3. https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
+
 
 
 
