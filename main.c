@@ -33,6 +33,7 @@ build:
 	}
 	fprintf(stdout, "input expression: \"%.*s\"\nlength: %ld\n", (int)input_size, str, 
 			input_size);
+
 	// tokenize input string
 	Tokenizer tkz = tokenizer_tokenize(str, input_size);
 #ifdef DEBUG

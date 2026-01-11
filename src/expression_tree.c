@@ -128,6 +128,7 @@ static inline void _prefix_bp(precedence_t *lbp, precedence_t *rbp, Token token)
          *               assign precedence to prefix operators
          *      - meaningful operators are {'+', '-', '++', '--'}
          *      - multiplicative operators < unary {'+', '-'}, < unary {'++', '--'}
+         *      - lbp's for a prefix operator is 0
          */
 	assert("parameter lbp and rbp must be valid precedence_t *'s" && lbp && rbp);
 	switch (token.type) {
@@ -136,6 +137,10 @@ static inline void _prefix_bp(precedence_t *lbp, precedence_t *rbp, Token token)
 		break;
 	case TOK_INC: case TOK_DEC:
 		{*lbp = 0, *rbp = 8;}
+		break;
+        case TOK_LIT: case TOK_VAR: case TOK_LPAREN:
+                // they are all atoms, which have the lowest binding power
+		{*lbp = 0, *rbp = 0;}
 		break;
 	default:
 		panic("bad prefix token in _prefix_bp");
@@ -215,18 +220,21 @@ static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
 		}
 		node->token = parser_peek(parser);
 		node->value = 0;
-		node->binary.right = NULL; // init this field to prevent reading uninit. memory during traversal
 
-		// what follows an operator is, in the most general sense, an expression
+                // init children to prevent reading uninit. memory during traversal
+                node->unary.operand = NULL;
+		node->binary.right = NULL; 
+
 		parser_advance(parser);
-		_prefix_bp(&lbp, &rbp, node->token);
-		node->unary.operand = _parse_expr(parser, rbp);
-
+                _prefix_bp(&lbp, &rbp, parser_peek(parser));
+                if (curr_bp > rbp) {
+                        break;
+                }
+                node->unary.operand = _parse_expr(parser, lbp);
 		break;
 	default:
 		panic("expecting one of {'+', '-', '++', '--'} as the first token of a prefix expression");
 	}
-
 	return node;
 }
 
@@ -263,7 +271,7 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 		break;
 	case TOK_ADD: case TOK_MINUS: case TOK_INC: case TOK_DEC:
 		// prefix expression
-		_prefix_bp(&lbp, &rbp, parser_peek(parser));
+                _prefix_bp(&lbp, &rbp, parser_peek(parser));
 		lhs = _parse_prefix(parser, rbp);
 		break;
 	default:
