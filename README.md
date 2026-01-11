@@ -24,6 +24,7 @@ regex.
 			|  Mult Atom
 			|  Unary
 
+                Unary   := ['+'|'-']? IncDec+
 		Unary	:= '+' Unary
 			|  '-' Unary
 			|  IncDec
@@ -67,10 +68,10 @@ This differs from regular programming language grammar for which above syntax co
 			  |__"a"
 			 |__"b"
   ```
+
 - The current implementation didn't parse them as above, sadly, and fixing the current implementation so that
   it parses correctly (adheres to most programming language's design (although not many of them supports
   implicit multiplication)) would be the next patch
-
 
 # Output (parseTree.txt)
 - The output is a simple visual display of the AST. Specifically, a pre-order tree-walk of the AST.
@@ -131,6 +132,10 @@ Assume `gcc` and `Make` are available on the machine.
 ```
 	make clean
 ```
+
+# Design Goals/Direction
+- see [design.md] (design.md)
+
 # Inspirations and References
 1. https://github.com/PixelRifts/math-expr-evaluator/tree/master
 2. https://craftinginterpreters.com

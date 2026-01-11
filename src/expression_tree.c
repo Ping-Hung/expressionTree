@@ -124,13 +124,18 @@ static inline int _expr_error_idx(Token *expr, size_t length)
 
 static inline void _prefix_bp(precedence_t *lbp, precedence_t *rbp, Token token)
 {
+        /*
+         *               assign precedence to prefix operators
+         *      - meaningful operators are {'+', '-', '++', '--'}
+         *      - multiplicative operators < unary {'+', '-'}, < unary {'++', '--'}
+         */
 	assert("parameter lbp and rbp must be valid precedence_t *'s" && lbp && rbp);
 	switch (token.type) {
 	case TOK_ADD: case TOK_MINUS:
-		{*lbp = 0, *rbp = 2;}
+		{*lbp = 0, *rbp = 6;}
 		break;
 	case TOK_INC: case TOK_DEC:
-		{*lbp = 0, *rbp = 4;}
+		{*lbp = 0, *rbp = 8;}
 		break;
 	default:
 		panic("bad prefix token in _prefix_bp");
@@ -146,7 +151,6 @@ static inline void _infix_bp(precedence_t *lbp, precedence_t *rbp, Token token)
 		{*lbp = 1, *rbp = 2;}
 		break;
 	case TOK_MULT: case TOK_DIV: case TOK_MOD:
-	case TOK_LIT: case TOK_VAR:
 		{*lbp = 3, *rbp = 4;}
 		break;
 	default:
@@ -211,11 +215,11 @@ static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
 		}
 		node->token = parser_peek(parser);
 		node->value = 0;
-		node->binary.right = NULL; // init this field to prevent memory fault in traversals
+		node->binary.right = NULL; // init this field to prevent reading uninit. memory during traversal
 
+		// what follows an operator is, in the most general sense, an expression
 		parser_advance(parser);
 		_prefix_bp(&lbp, &rbp, node->token);
-		// what follows an operator is, in the most general sense, an expression
 		node->unary.operand = _parse_expr(parser, rbp);
 
 		break;
@@ -246,9 +250,9 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 	 */ 
 	assert(parser && "parameter parser must be a valid Parser *");
 	precedence_t lbp, rbp;
+	ExpressionTree lhs = NULL;
 
 	// make lhs
-	ExpressionTree lhs = NULL;
 	switch (parser_peek(parser).type) {
 	case TOK_EOF:	
 		// base case: empty expr ⇒  empty node (Ø)
@@ -304,7 +308,7 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 		case TOK_LPAREN: case TOK_VAR: case TOK_LIT:
 			// implicit multiplication cases:
 			// 	lhs '(' expr ')' | lhs TOK_LIT | lhs TOK_VAR
-			// Notice they are all atoms (call _parse_atom (this preserves left associativity)
+                        // Notice they are all atoms (call _parse_atom (this preserves left associativity)
 			lhs = _parse_atom(parser, 0);
 			op->token = (Token) {
 				.type = TOK_MULT, 
