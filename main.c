@@ -31,7 +31,8 @@ build:
 	if (isspace(str[input_size - 1])) {
 		str[input_size - 1] = '\0';
 	}
-	fprintf(stdout, "input expression: \"%.*s\"\nlength: %ld\n", (int)input_size, str, 
+	fprintf(stdout, "input expression: \"%.*s\"\nlength: %ld\n", 
+                        (int)input_size, str, 
 			input_size);
 
 	// tokenize input string

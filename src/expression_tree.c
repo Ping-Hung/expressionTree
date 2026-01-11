@@ -204,15 +204,30 @@ static inline ExpressionTree _parse_atom(Parser *parser, precedence_t curr_bp)
 		panic("expecting TOK_VAR|TOK_LIT|'(' as the first token in _parse_atom");
 	}
 
+        if (parser_peek(parser).type == TOK_RPAREN) {
+                parser_advance(parser);
+        }
+
 	return node;
 }
 
 static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
 {
+        /* Dedicated function to parse prefix expressions
+         *          prefix := op prefix
+         *                 |  Atom
+         *                 |  EOF
+         */
 	ExpressionTree node = NULL;
 	precedence_t lbp, rbp;
-	// the first token of a prefix expression is one of {'+', '-', '++', '--'}
 	switch (parser_peek(parser).type) {
+        // base cases
+        case TOK_EOF:
+                break;
+        case TOK_LIT: case TOK_VAR: case TOK_LPAREN:
+                node = _parse_atom(parser, 0);
+                break;
+        // recursive cases
 	case TOK_ADD: case TOK_MINUS: case TOK_INC: case TOK_DEC:
 		node = malloc(sizeof(*node));
 		if (!node) {
@@ -221,20 +236,25 @@ static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
 		node->token = parser_peek(parser);
 		node->value = 0;
 
-                // init children to prevent reading uninit. memory during traversal
-                node->unary.operand = NULL;
+                // init children to prevent reading uninitialized memory during traversal
 		node->binary.right = NULL; 
 
 		parser_advance(parser);
                 _prefix_bp(&lbp, &rbp, parser_peek(parser));
-                if (curr_bp > rbp) {
-                        break;
+                if (curr_bp <= rbp) { 
+                        // compare how well the new token(s) binds the right,
+                        // equal or higher than curr_bp means they reside lower in the tree,
+                        // recursively build them.
+                        node->unary.operand = _parse_prefix(parser, lbp);
                 }
-                node->unary.operand = _parse_expr(parser, lbp);
 		break;
 	default:
-		panic("expecting one of {'+', '-', '++', '--'} as the first token of a prefix expression");
+		panic("bad token in _parse_prefix");
 	}
+
+        if (parser_peek(parser).type == TOK_RPAREN) {
+                parser_advance(parser);
+        }
 	return node;
 }
 
@@ -271,8 +291,7 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 		break;
 	case TOK_ADD: case TOK_MINUS: case TOK_INC: case TOK_DEC:
 		// prefix expression
-                _prefix_bp(&lbp, &rbp, parser_peek(parser));
-		lhs = _parse_prefix(parser, rbp);
+		lhs = _parse_prefix(parser, curr_bp);
 		break;
 	default:
 		panic("bad token at _parse_expr");
@@ -290,10 +309,9 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 
 	// parse the rest of the expression (lhs is completely parsed)
 	// parser->curr should point to an operator token
-	while (parser_peek(parser).type != TOK_ERROR && 
-	       parser_peek(parser).type != TOK_EOF   &&  
-	       parser_peek(parser).type != TOK_RPAREN) {
-
+        while (parser_peek(parser).type != TOK_ERROR && 
+               parser_peek(parser).type != TOK_EOF   &&
+               parser_peek(parser).type != TOK_RPAREN) {
 		// build op (an ASTNode holding an operator)
 		ExpressionTree op = malloc(sizeof(*op));
 		if (!op) {
@@ -316,7 +334,7 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 		case TOK_LPAREN: case TOK_VAR: case TOK_LIT:
 			// implicit multiplication cases:
 			// 	lhs '(' expr ')' | lhs TOK_LIT | lhs TOK_VAR
-                        // Notice they are all atoms (call _parse_atom (this preserves left associativity)
+                        // Notice they are all atoms (call _parse_atom (this preserves left associativity))
 			lhs = _parse_atom(parser, 0);
 			op->token = (Token) {
 				.type = TOK_MULT, 
