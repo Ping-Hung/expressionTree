@@ -24,7 +24,6 @@ regex.
 			|  Mult Atom
 			|  Unary
 
-                Unary   := ['+'|'-']? IncDec+
 		Unary	:= '+' Unary
 			|  '-' Unary
 			|  IncDec
