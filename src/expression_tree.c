@@ -15,7 +15,7 @@ static inline void _infix_bp(precedence_t *lbp, precedence_t *rbp, Token token);
 // expression parsing
 static inline ExpressionTree _parse_atom(Parser *parser, precedence_t curr_bp);
 static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp);
-static inline ExpressionTree _parse_unary(Parser *parser, ExpressionTree op, precedence_t curr_bp);
+static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree op);
 static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp);
 
 // main apis
@@ -125,12 +125,7 @@ static inline int _expr_error_idx(Token *expr, size_t length)
 
 static inline void _prefix_bp(precedence_t *lbp, precedence_t *rbp, Token token)
 {
-        /*
-         *               assign precedence to prefix operators
-         *      - meaningful operators are {'+', '-', '++', '--'}
-         *      - multiplicative operators < unary {'+', '-'}, < unary {'++', '--'}
-         *      - lbp's for a prefix operator is 0
-         */
+        // all valid operators are treated as unary operators in this function
 	assert("parameter lbp and rbp must be valid precedence_t *'s" && lbp && rbp);
 	switch (token.type) {
 	case TOK_ADD: case TOK_MINUS:
@@ -150,10 +145,10 @@ static inline void _prefix_bp(precedence_t *lbp, precedence_t *rbp, Token token)
 
 static inline void _infix_bp(precedence_t *lbp, precedence_t *rbp, Token token)
 {
+        // all valid operators are treated as binary operators in this function
 	assert("parameter lbp and rbp must be valid precedence_t *'s" && lbp && rbp);
 	switch (token.type) {
 	case TOK_ADD: case TOK_MINUS:
-		// need to consider if they are stand alone prefix operators
 		{*lbp = 1, *rbp = 2;}
 		break;
 	case TOK_MULT: case TOK_DIV: case TOK_MOD:
@@ -211,10 +206,8 @@ static inline ExpressionTree _parse_atom(Parser *parser, precedence_t curr_bp)
 
 static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
 {
-        /* Dedicated function to parse prefix expressions
-         *          prefix := op prefix
-         *                 |  Atom
-         *                 |  EOF
+        /* Dedicated function to parse prefix expressions 
+         *           prefix := op prefix |  Atom |  EOF
          */
         ExpressionTree node = NULL;
 	precedence_t lbp, rbp;
@@ -256,40 +249,37 @@ static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
 	return node;
 }
 
-static inline ExpressionTree _parse_unary(Parser *parser, ExpressionTree op, precedence_t curr_bp)
+static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree op)
 {
-        /* A dedicated function to parse unary expressions found in _parse_expr
-         * 2 scenarios:
-         *     1. (lhs op) is a **postfix expression** that may follow more operators and/or
-         *        terms, so the entire expression is
-         *                             (lhs op) terms,
-         *        which is not neccessarily an implicit multiplication.
-         *
-         *     2. (op terms) is a **prefix expression**, and the entire expression is
-         *                             lhs (op terms),
-         *        an implicit multiplication of lhs and (op terms)
-         * **note** terms := op terms | Atom
-         * - Do a "lookahead then branch" strategy
+        /* A dedicated function to parse postfix expressions found in _parse_expr.
+         * It should:
+         *      - construct an AST for postfix expressions
+         *      - change where op is referring to (pointing to) when neccessary
+         *      - advance parser so parser->curr will point to the end of this posfix expression (begin of
+         *      whatever follows this postfix expression)
          */
         assert(parser && "parameter parser needs to be a valid Parser *");
         assert(op && "parameter op needs to be a valid ExpressionTree");
         assert((op->token.type == TOK_INC || op->token.type == TOK_DEC) &&
                "expect op to be one of {'++', '--'}");
 
-        // ExpressionTree lhs = op->binary.left;
-        parser_advance(parser);
-        switch (parser_peek(parser).type) {
-        case TOK_ADD: case TOK_MINUS: 
-        case TOK_MULT: case TOK_DIV: case TOK_MOD:
-        // binary operators ⇒  case (lhs op) terms ⇒  postfix terms
-        case TOK_VAR: case TOK_LIT: case TOK_LPAREN:
-        // treated the same as binary operators (since this entails implicit multiplication)
+        while (1) {
+                parser_advance(parser);
+                Token tok = parser_peek(parser);
+                if (tok.type != TOK_INC && tok.type != TOK_DEC) {
+                        break;
+                }
+                ExpressionTree top_op = malloc(sizeof(*top_op));
+                if (!top_op) {
+                        panic("malloc failed in _parse_postfix");
+                }
+                
+                top_op->token = tok;
+                top_op->value = 0;
+                top_op->unary.operand = op;
+                top_op->binary.right = NULL;   // initialize this field to avoid access uninit. memory during traversal
 
-        case TOK_INC: case TOK_DEC:
-
-        default:
-        // invalid cases
-                break;
+                op = top_op;
         }
         return op;
 }
@@ -358,14 +348,12 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 
 		switch (op->token.type) {
 		case TOK_INC: case TOK_DEC:
-			lhs = op;
-			parser_advance(parser);
+			lhs = _parse_postfix(parser, op);
 			continue;
 		case TOK_LPAREN: case TOK_VAR: case TOK_LIT:
 			// implicit multiplication cases:
 			// 	lhs '(' expr ')' | lhs TOK_LIT | lhs TOK_VAR
-                        // Notice they are all atoms (call _parse_atom (this preserves left associativity))
-			lhs = _parse_atom(parser, 0);
+			lhs = _parse_expr(parser, 0);
 			op->token = (Token) {
 				.type = TOK_MULT, 
 				.token_string = "*",

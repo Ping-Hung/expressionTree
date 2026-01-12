@@ -50,10 +50,10 @@ This differs from regular programming language grammar for which above syntax co
 ```
 	("+"|"-") < ("*"|"/"|"%") < ("++"|"--")
 ```
-## Note on `IncDec` (`++` or `--`)
-- They are right associative and have the highest precedence, meaning that expression `a b ++` and `++ a b`
-  should be parsed as
-
+## Notes on `IncDec` (`++` or `--`)
+- They are right associative and have the highest precedence, meaning that expression `a b ++ ⇔  a * (b++)`
+  and `++ a b ⇔  (++a) * b`.
+- Their respective parse trees are: 
   ```
 		"*"
 		 |__"a"
@@ -68,9 +68,17 @@ This differs from regular programming language grammar for which above syntax co
 			 |__"b"
   ```
 
-- The current implementation didn't parse them as above, sadly, and fixing the current implementation so that
-  it parses correctly (adheres to most programming language's design (although not many of them supports
-  implicit multiplication)) would be the next patch
+## Caveats of `IncDec` and Implicit Multiplication
+- Mixing prefix `IncDec`, postfix `IncDec`, and implicit multiplication together is strongly discouraged,
+  however, this project did handle them.
+### Example
+Consider the expression ``a++ --b``, there are 2 possible interpretations:
+1. ``a++ --b ⇔ (a++) * (--b)``
+2. ``a++ --b ⇔ ((a++)--) * b``
+- This project generates AST with the second interpretation, as the author deemed the second interpretation
+preserves right associativity the best.
+- However, and to reiterate, it is strongly discouraged to write expressions similar to above example.
+
 
 # Output (parseTree.txt)
 - The output is a simple visual display of the AST. Specifically, a pre-order tree-walk of the AST.
