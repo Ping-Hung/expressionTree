@@ -243,9 +243,6 @@ static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
 		panic("bad token in _parse_prefix");
 	}
 
-        if (parser_peek(parser).type == TOK_RPAREN) {
-                parser_advance(parser);
-        }
 	return node;
 }
 
