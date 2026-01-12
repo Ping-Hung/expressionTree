@@ -15,6 +15,7 @@ static inline void _infix_bp(precedence_t *lbp, precedence_t *rbp, Token token);
 // expression parsing
 static inline ExpressionTree _parse_atom(Parser *parser, precedence_t curr_bp);
 static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp);
+static inline ExpressionTree _parse_unary(Parser *parser, ExpressionTree op, precedence_t curr_bp);
 static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp);
 
 // main apis
@@ -203,7 +204,8 @@ static inline ExpressionTree _parse_atom(Parser *parser, precedence_t curr_bp)
 	default:
 		panic("expecting TOK_VAR|TOK_LIT|'(' as the first token in _parse_atom");
 	}
-
+        // NEVER advance the parser past the ')' in this function, this extra advancement disturbs the grouping
+        // of parenthesized expressions. Leave the task to the callers (_parse_expr or _parse_prefix)
 	return node;
 }
 
@@ -214,7 +216,7 @@ static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
          *                 |  Atom
          *                 |  EOF
          */
-	ExpressionTree node = NULL;
+        ExpressionTree node = NULL;
 	precedence_t lbp, rbp;
 	switch (parser_peek(parser).type) {
         // base cases
@@ -252,6 +254,44 @@ static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
                 parser_advance(parser);
         }
 	return node;
+}
+
+static inline ExpressionTree _parse_unary(Parser *parser, ExpressionTree op, precedence_t curr_bp)
+{
+        /* A dedicated function to parse unary expressions found in _parse_expr
+         * 2 scenarios:
+         *     1. (lhs op) is a **postfix expression** that may follow more operators and/or
+         *        terms, so the entire expression is
+         *                             (lhs op) terms,
+         *        which is not neccessarily an implicit multiplication.
+         *
+         *     2. (op terms) is a **prefix expression**, and the entire expression is
+         *                             lhs (op terms),
+         *        an implicit multiplication of lhs and (op terms)
+         * **note** terms := op terms | Atom
+         * - Do a "lookahead then branch" strategy
+         */
+        assert(parser && "parameter parser needs to be a valid Parser *");
+        assert(op && "parameter op needs to be a valid ExpressionTree");
+        assert((op->token.type == TOK_INC || op->token.type == TOK_DEC) &&
+               "expect op to be one of {'++', '--'}");
+
+        // ExpressionTree lhs = op->binary.left;
+        parser_advance(parser);
+        switch (parser_peek(parser).type) {
+        case TOK_ADD: case TOK_MINUS: 
+        case TOK_MULT: case TOK_DIV: case TOK_MOD:
+        // binary operators ⇒  case (lhs op) terms ⇒  postfix terms
+        case TOK_VAR: case TOK_LIT: case TOK_LPAREN:
+        // treated the same as binary operators (since this entails implicit multiplication)
+
+        case TOK_INC: case TOK_DEC:
+
+        default:
+        // invalid cases
+                break;
+        }
+        return op;
 }
 
 static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
@@ -293,22 +333,17 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 		panic("bad token at _parse_expr");
 	}
 
-	if (parser_peek(parser).type == TOK_RPAREN) {
-		// indicates that we are looking at the end of a grouped (parenthesized) expression
-		// advance parser then return to the caller
-		parser_advance(parser);
-		return lhs;
-	}
-
-	// parser->curr[0] is the last token of lhs at this point (which should not be a ')')
-	assert("no ')' before loop" && parser_peek(parser).type != TOK_RPAREN);
-
+	// parser->curr[0] is the last token of lhs at this point, which should be an operator
 	// parse the rest of the expression (lhs is completely parsed)
-	// parser->curr should point to an operator token
-        while (parser_peek(parser).type != TOK_ERROR && 
-               parser_peek(parser).type != TOK_EOF   &&
-               parser_peek(parser).type != TOK_RPAREN) {
-		// build op (an ASTNode holding an operator)
+        while (parser_peek(parser).type != TOK_ERROR && parser_peek(parser).type != TOK_EOF) {
+                if (parser_peek(parser).type == TOK_RPAREN) {
+                        // ')' is not an operator, it also marks the end of a nested expression
+                        // skip then return to caller
+                        parser_advance(parser);
+                        return lhs;
+                }
+
+                // build op (an ASTNode holding an operator)
 		ExpressionTree op = malloc(sizeof(*op));
 		if (!op) {
 			panic("malloc failed in _parse_expr");
@@ -323,7 +358,6 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 
 		switch (op->token.type) {
 		case TOK_INC: case TOK_DEC:
-			// (lhs op) is a postfix expression that may follow an operator
 			lhs = op;
 			parser_advance(parser);
 			continue;
