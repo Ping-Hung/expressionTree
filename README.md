@@ -69,7 +69,7 @@ This differs from regular programming language grammar for which above syntax co
   ```
 
 ## Caveats of `IncDec` and Implicit Multiplication
-- Mixing prefix `IncDec`, postfix `IncDec`, and implicit multiplication together is strongly discouraged,
+- Mixing prefix `IncDec`, postfix `IncDec`, and implicit multiplication together is **strongly discouraged**,
   however, this project did handle them.
 ### Example
 Consider the expression ``a++ --b``, there are 2 possible interpretations:
@@ -77,7 +77,7 @@ Consider the expression ``a++ --b``, there are 2 possible interpretations:
 2. ``a++ --b ⇔ ((a++)--) * b``
 - This project generates AST with the second interpretation, as the author deemed the second interpretation
 preserves right associativity the best.
-- However, and to reiterate, it is strongly discouraged to write expressions similar to above example.
+- However, and to reiterate, it is **strongly discouraged** to write expressions similar to above example.
 
 
 # Output (parseTree.txt)
@@ -147,6 +147,7 @@ Assume `gcc` and `Make` are available on the machine.
 1. https://github.com/PixelRifts/math-expr-evaluator/tree/master
 2. https://craftinginterpreters.com
 3. https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
+
 
 
 
