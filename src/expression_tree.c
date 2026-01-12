@@ -204,10 +204,6 @@ static inline ExpressionTree _parse_atom(Parser *parser, precedence_t curr_bp)
 		panic("expecting TOK_VAR|TOK_LIT|'(' as the first token in _parse_atom");
 	}
 
-        if (parser_peek(parser).type == TOK_RPAREN) {
-                parser_advance(parser);
-        }
-
 	return node;
 }
 
