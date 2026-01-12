@@ -228,6 +228,7 @@ static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
 		node->value = 0;
 
                 // init children to prevent reading uninitialized memory during traversal
+		node->unary.operand = NULL;
 		node->binary.right = NULL; 
 
 		parser_advance(parser);
