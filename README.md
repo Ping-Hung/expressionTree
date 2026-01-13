@@ -1,5 +1,7 @@
 # ExpressionTree
-This is an attempt to create a simple scanner (tokenizer) and parser that builds a parse tree from a user specified mathematical expression.
+This is an attempt to create a simple scanner (tokenizer) and parser that builds a parse tree from a
+user specified mathematical expression, where Pratt parsing is used as the main algorithm for tree
+building.
 
 # Lexical Symbols
 The tokenizer recognizes the following as valid symbols: 

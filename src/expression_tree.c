@@ -14,7 +14,7 @@ static inline void _infix_bp(precedence_t *lbp, precedence_t *rbp, Token token);
 
 // expression parsing
 static inline ExpressionTree _parse_atom(Parser *parser, precedence_t curr_bp);
-static inline ExpressionTree _parse_unary(Parser *parser, ExpressionTree op, precedence_t curr_bp);
+static inline ExpressionTree _parse_unary(Parser *parser, ExpressionTree lhs, precedence_t curr_bp);
 static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp);
 static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree op);
 static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp);
@@ -205,17 +205,11 @@ static inline ExpressionTree _parse_atom(Parser *parser, precedence_t curr_bp)
 	return node;
 }
 
-static inline ExpressionTree _parse_unary(Parser *parser, ExpressionTree op, precedence_t curr_bp)
+static inline ExpressionTree _parse_unary(Parser *parser, ExpressionTree lhs, precedence_t curr_bp)
 {
-        /* Dispatch op to _parse_prefix or _parse_postfix */
+        /* Dispatcher of _parse_prefix and _parse_postfix */
         assert(parser && "parameter parser needs to be a valid Parser *");
-        assert(op && "parameter op needs to be a valid ExpressionTree");
-        assert((op->token.type == TOK_INC || op->token.type == TOK_DEC) &&
-               "expect op to be one of {'++', '--'}");
-        if (!op) {
-                return _parse_prefix(parser, curr_bp);
-        }
-        return _parse_postfix(parser, op);
+        return lhs ? _parse_postfix(parser, lhs) : _parse_prefix(parser, curr_bp);
 }
 
 static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
@@ -250,11 +244,11 @@ static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
 
 		parser_advance(parser);
                 _prefix_bp(&lbp, &rbp, parser_peek(parser));
-                if (curr_bp <= rbp) { 
+                if (curr_bp <= lbp) { 
                         // compare how well the new token(s) binds the right,
                         // equal or higher than curr_bp means they reside lower in the tree,
                         // recursively build them.
-                        node->unary.operand = _parse_prefix(parser, lbp);
+                        node->unary.operand = _parse_prefix(parser, rbp);
                 }
 		break;
 	default:
@@ -267,12 +261,17 @@ static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
 static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree op)
 {
         /* A dedicated function to parse postfix expressions found in _parse_expr.
+         *
+         * It assumes op to hold either a '++' or '--' token and have the following topology
+         *                                     op
+         *                                    / 
+         *                                  lhs
          * It should:
          *      - Construct an AST for postfix expressions.
          *      - Change where op is referring to (pointing to) when neccessary.
          *      - Advance parser to consume all the {'++', '--'} tokens.
-         *      - Before return, parser->curr should point to the start of the expression that follows this
-         *        postfix expression.
+         *      - Move parser->curr  to the start of the expression following this postfix expression
+         *        before returning.
          */
         assert(parser && "parameter parser needs to be a valid Parser *");
         assert(op && "parameter op needs to be a valid ExpressionTree");
@@ -293,8 +292,8 @@ static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree op)
                 top_op->token = tok;
                 top_op->value = 0;
                 top_op->unary.operand = op;
-                top_op->binary.right = NULL;   // initialize this field to avoid access uninit. memory during traversal
-
+                top_op->binary.right = NULL;   // initialize this field to avoid access uninit.
+                                               // memory during traversal
                 op = top_op;
         }
         return op;
@@ -313,10 +312,11 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 	 *  			op
 	 *  		       /   
 	 *  		     lhs
-	 *  	and recursively build op->binary.right with _parse_expr
+	 *  	, then recursively build the last expr.
 	 *
-	 *  3) lhs ← op
-	 *  4) return lhs
+         *  3) op->binary.right ← expr
+	 *  4) lhs ← op
+	 *  5) return lhs
 	 */ 
 	assert(parser && "parameter parser must be a valid Parser *");
 	precedence_t lbp, rbp;
@@ -343,10 +343,10 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 	// parse the rest of the expression (lhs is completely parsed)
         while (parser_peek(parser).type != TOK_ERROR && parser_peek(parser).type != TOK_EOF) {
                 if (parser_peek(parser).type == TOK_RPAREN) {
-                        // ')' is not an operator, it also marks the end of a nested expression
-                        // skip then return to caller
+                        // ')' is not an operator, but it marks the end of a nested expression. 
+                        // Skip then return to caller
                         parser_advance(parser);
-                        return lhs;
+                        break;
                 }
 
                 // build op (an ASTNode holding an operator)
@@ -369,7 +369,8 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 		case TOK_LPAREN: case TOK_VAR: case TOK_LIT:
 			// implicit multiplication cases:
 			// 	lhs '(' expr ')' | lhs TOK_LIT | lhs TOK_VAR
-			lhs = _parse_atom(parser, 0);
+                        // call _parse_expr to handle potential postfix expressions
+			lhs = _parse_expr(parser, curr_bp);
 			op->token = (Token) {
 				.type = TOK_MULT, 
 				.token_string = "*",
