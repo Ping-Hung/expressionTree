@@ -283,9 +283,12 @@ static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree op)
         assert((op->token.type == TOK_INC || op->token.type == TOK_DEC) &&
                "expect op to be one of {'++', '--'}");
 
-        parser_advance(parser);
-        Token tok = parser_peek(parser);
-        while (tok.type == TOK_INC || tok.type == TOK_DEC) {
+        while (1) {
+		parser_advance(parser);
+		Token tok = parser_peek(parser);
+		if (!(tok.type == TOK_INC || tok.type == TOK_DEC)) {
+			break;
+		}
                 ExpressionTree top_op = _alloc_node();
                 *top_op = (ASTNode) {
                         .token = tok,
@@ -294,12 +297,7 @@ static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree op)
                         .binary.right  = NULL;  // initialize this field to avoid access uninit.
                                                 // memory during traversal
                 };
-                  
                 op = top_op;
-
-                parser_advance(parser);
-                tok = parser_peek(parser);
-
         }
         return op;
 }
