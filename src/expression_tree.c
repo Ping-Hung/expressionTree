@@ -14,6 +14,7 @@ static inline void _infix_bp(precedence_t *lbp, precedence_t *rbp, Token token);
 
 // expression parsing
 static inline ExpressionTree _parse_atom(Parser *parser, precedence_t curr_bp);
+static inline ExpressionTree _parse_unary(Parser *parser, ExpressionTree op, precedence_t curr_bp);
 static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp);
 static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree op);
 static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp);
@@ -204,13 +205,29 @@ static inline ExpressionTree _parse_atom(Parser *parser, precedence_t curr_bp)
 	return node;
 }
 
+static inline ExpressionTree _parse_unary(Parser *parser, ExpressionTree op, precedence_t curr_bp)
+{
+        /* Dispatch op to _parse_prefix or _parse_postfix */
+        assert(parser && "parameter parser needs to be a valid Parser *");
+        assert(op && "parameter op needs to be a valid ExpressionTree");
+        assert((op->token.type == TOK_INC || op->token.type == TOK_DEC) &&
+               "expect op to be one of {'++', '--'}");
+        if (!op) {
+                return _parse_prefix(parser, curr_bp);
+        }
+        return _parse_postfix(parser, op);
+}
+
 static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
 {
         /* Dedicated function to parse prefix expressions 
          *           prefix := op prefix |  Atom |  EOF
          */
+        assert(parser && "parameter parser needs to be a valid Parser *");
+
         ExpressionTree node = NULL;
 	precedence_t lbp, rbp;
+
 	switch (parser_peek(parser).type) {
         // base cases
         case TOK_EOF:
@@ -228,6 +245,7 @@ static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
 		node->value = 0;
 
                 // init children to prevent reading uninitialized memory during traversal
+                node->unary.operand = NULL;
 		node->binary.right = NULL; 
 
 		parser_advance(parser);
@@ -243,9 +261,6 @@ static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
 		panic("bad token in _parse_prefix");
 	}
 
-        if (parser_peek(parser).type == TOK_RPAREN) {
-                parser_advance(parser);
-        }
 	return node;
 }
 
@@ -253,10 +268,11 @@ static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree op)
 {
         /* A dedicated function to parse postfix expressions found in _parse_expr.
          * It should:
-         *      - construct an AST for postfix expressions
-         *      - change where op is referring to (pointing to) when neccessary
-         *      - advance parser so parser->curr will point to the end of this posfix expression (begin of
-         *      whatever follows this postfix expression)
+         *      - Construct an AST for postfix expressions.
+         *      - Change where op is referring to (pointing to) when neccessary.
+         *      - Advance parser to consume all the {'++', '--'} tokens.
+         *      - Before return, parser->curr should point to the start of the expression that follows this
+         *        postfix expression.
          */
         assert(parser && "parameter parser needs to be a valid Parser *");
         assert(op && "parameter op needs to be a valid ExpressionTree");
@@ -353,7 +369,7 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 		case TOK_LPAREN: case TOK_VAR: case TOK_LIT:
 			// implicit multiplication cases:
 			// 	lhs '(' expr ')' | lhs TOK_LIT | lhs TOK_VAR
-			lhs = _parse_expr(parser, 0);
+			lhs = _parse_atom(parser, 0);
 			op->token = (Token) {
 				.type = TOK_MULT, 
 				.token_string = "*",
