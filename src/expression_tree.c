@@ -282,21 +282,20 @@ static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree op)
         assert(op && "parameter op needs to be a valid ExpressionTree");
         assert((op->token.type == TOK_INC || op->token.type == TOK_DEC) &&
                "expect op to be one of {'++', '--'}");
-
         while (1) {
-		parser_advance(parser);
-		Token tok = parser_peek(parser);
-		if (!(tok.type == TOK_INC || tok.type == TOK_DEC)) {
-			break;
-		}
+                parser_advance(parser);
+                Token tok = parser_peek(parser);
+                if (tok.type != TOK_INC && tok.type != TOK_DEC) {
+                        break;
+                }
+
                 ExpressionTree top_op = _alloc_node();
-                *top_op = (ASTNode) {
-                        .token = tok,
-                        .value = 0,
-                        .unary.operand = op,
-                        .binary.right  = NULL;  // initialize this field to avoid access uninit.
+                top_op->token = tok;
+                top_op->value = 0;
+                top_op->unary.operand = op;
+                top_op->binary.right  = NULL;   // initialize this field to prevent access uninit.
                                                 // memory during traversal
-                };
+
                 op = top_op;
         }
         return op;
