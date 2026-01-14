@@ -23,7 +23,7 @@ regex.
 		Mult	:= Mult '*' Unary
 			|  Mult '/' Unary
 			|  Mult '%' Unary
-			|  Mult Atom
+			|  Mult Atom		// implicit multiplication
 			|  Unary
 
 		Unary	:= '+' Unary
@@ -70,7 +70,7 @@ This differs from regular programming language grammar for which above syntax co
 			 |__"b"
   ```
 
-## Caveats of `IncDec` and Implicit Multiplication
+## Caveats to Mixing `IncDec` and Implicit Multiplication
 - Mixing prefix `IncDec`, postfix `IncDec`, and implicit multiplication together is **strongly discouraged**,
   however, this project did handle them.
 ### Example
@@ -149,6 +149,7 @@ Assume `gcc` and `Make` are available on the machine.
 1. https://github.com/PixelRifts/math-expr-evaluator/tree/master
 2. https://craftinginterpreters.com
 3. https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
+
 
 
 
