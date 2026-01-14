@@ -16,9 +16,8 @@ static inline void _infix_bp(precedence_t *lbp, precedence_t *rbp, Token token);
 
 // expression parsing
 static inline ExpressionTree _parse_atom(Parser *parser, precedence_t curr_bp);
-static inline ExpressionTree _parse_unary(Parser *parser, ExpressionTree lhs, precedence_t curr_bp);
 static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp);
-static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree op);
+static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree lhs);
 static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp);
 
 // main apis
@@ -175,15 +174,7 @@ static inline ExpressionTree _parse_atom(Parser *parser, precedence_t curr_bp)
 {
 	/*
 	 *   Atom := TOK_LIT | TOK_VAR | '(' expr ')'
-	 *	  1) case TOK_LIT|TOK_VAR: 
-	 *	  	node ← LIT_Node | VAR_Node
-	 *	     case '(':
-	 *	    	advance parser past '('
-	 *	    	node ← _parse_expr(parser, 0)
-	 *	    	advance parser past ')'
-	 *	  2) advance parser past the token
-	 *	  3) return node
-	 *    makes call to _parse_expr, which could call _parse_atom (indirectly recursive)
+	 *  makes call to _parse_expr, which could call _parse_atom (indirectly recursive)
 	 */
 	ExpressionTree node = NULL;
 	switch (parser_peek(parser).type) {
@@ -198,7 +189,8 @@ static inline ExpressionTree _parse_atom(Parser *parser, precedence_t curr_bp)
 		node->binary.left = NULL; 
 		node->binary.right = NULL; 
 
-		parser_advance(parser);	// move parser->curr past TOK_VAR | TOK_VAR
+                // TOK_VAR or TOK_LIT might follow '++' or '--', so call _parse_postfix
+                node = _parse_postfix(parser, node);
 		break;
 	case TOK_LPAREN:
 		// recursive case: 
@@ -211,13 +203,6 @@ static inline ExpressionTree _parse_atom(Parser *parser, precedence_t curr_bp)
         // NEVER advance the parser past the ')' in this function, this extra advancement disturbs the grouping
         // of parenthesized expressions. Leave the task to the callers (_parse_expr or _parse_prefix)
 	return node;
-}
-
-static inline ExpressionTree _parse_unary(Parser *parser, ExpressionTree lhs, precedence_t curr_bp)
-{
-        /* Dispatcher of _parse_prefix and _parse_postfix */
-        assert(parser && "parameter parser needs to be a valid Parser *");
-        return lhs ? _parse_postfix(parser, lhs) : _parse_prefix(parser, curr_bp);
 }
 
 static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
@@ -262,25 +247,25 @@ static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
 	return node;
 }
 
-static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree op)
+static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree lhs)
 {
-        /* A dedicated function to parse postfix expressions found in _parse_expr.
-         *
-         * It assumes op holds either a '++' or '--' token and have the following topology
-         *                                     op
-         *                                    / 
-         *                                  lhs
+
+        /*           Funtion that parses general postfix expressions
+         *                      postfix := Atom+ ['++'|'--']*
          * It should:
          *      - Construct an AST for postfix expressions.
-         *      - Change where op is referring to (pointing to) when neccessary.
+         *      - Change where lhs is referring to (pointing to) when neccessary.
          *      - Advance parser to consume all the {'++', '--'} tokens.
          *      - Move parser->curr  to the start of the expression following this postfix expression
          *        before returning.
          */
         assert(parser && "parameter parser needs to be a valid Parser *");
-        assert(op && "parameter op needs to be a valid ExpressionTree");
-        assert((op->token.type == TOK_INC || op->token.type == TOK_DEC) &&
-               "expect op to be one of {'++', '--'}");
+        assert(lhs && "parameter lhs needs to be a valid ExpressionTree");
+        if (!(lhs->token.type == TOK_LIT || lhs->token.type == TOK_VAR ||
+              lhs->token.type == TOK_INC || lhs->token.type == TOK_DEC)) {
+                panic("paramenter lhs must be either a LIT, VAR, '++' or '--' in parse_postfix");
+        }
+
         while (1) {
                 parser_advance(parser);
                 Token tok = parser_peek(parser);
@@ -289,15 +274,15 @@ static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree op)
                 }
 
                 ExpressionTree top_op = _alloc_node();
-		// somehow compound literal initialization will result in ASTNode loss (loosing op)
+                // somehow compound literal initialization will result in ASTNode loss (loosing op)
                 top_op->token = tok;
                 top_op->value = 0;
-                top_op->unary.operand = op;
+                top_op->unary.operand = lhs;
                 top_op->binary.right  = NULL;   // initialize this field to prevent access uninit.
                                                 // memory during traversal
-                op = top_op;
+                lhs = top_op;
         }
-        return op;
+        return lhs;
 }
 
 static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
@@ -365,20 +350,9 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 			lhs = _parse_postfix(parser, op);
 			continue;
 
-                // implicit multiplication cases: lhs '(' expr ')' | lhs TOK_LIT | lhs TOK_VAR
-                case TOK_VAR: case TOK_LIT:
-                        // call _parse_expr to handle potential postfix expressions
-			lhs = _parse_expr(parser, curr_bp);
-			op->token = (Token) {
-				.type = TOK_MULT, 
-				.token_string = "*",
-				.length = 1
-			};
-
-			op->binary.right = lhs;
-			lhs = op;
-			continue;
-                 case TOK_LPAREN:
+                case TOK_VAR: case TOK_LIT: case TOK_LPAREN:
+                        // implicit multiplication cases: lhs '(' expr ')' | lhs TOK_LIT | lhs TOK_VAR, 
+                        // which are atoms
 			lhs = _parse_atom(parser, curr_bp);
 			op->token = (Token) {
 				.type = TOK_MULT, 
