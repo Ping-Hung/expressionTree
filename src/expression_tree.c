@@ -245,14 +245,13 @@ static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
 		node->value = 0;
                 // init children to prevent reading uninitialized memory during traversal
                 node->unary.operand = NULL;
-		node->binary.right = NULL; 
+		node->binary.right  = NULL; 
 
 		parser_advance(parser);
                 _prefix_bp(&lbp, &rbp, parser_peek(parser));
                 if (curr_bp <= rbp) { 
-                        // compare how well the new token(s) binds the right,
-                        // equal or higher than curr_bp means they reside lower in the tree,
-                        // recursively build them.
+                        // compare how "tight" the new token(s) binds to the right, ≤ curr_bp means
+                        // they reside lower in the tree. Recursively build them.
                         node->unary.operand = _parse_prefix(parser, lbp);
                 }
 		break;
@@ -267,7 +266,7 @@ static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree op)
 {
         /* A dedicated function to parse postfix expressions found in _parse_expr.
          *
-         * It assumes op to hold either a '++' or '--' token and have the following topology
+         * It assumes op holds either a '++' or '--' token and have the following topology
          *                                     op
          *                                    / 
          *                                  lhs
@@ -290,7 +289,7 @@ static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree op)
                 }
 
                 ExpressionTree top_op = _alloc_node();
-				// somehow compound literal initialization will result in ASTNode loss (loosing op)
+		// somehow compound literal initialization will result in ASTNode loss (loosing op)
                 top_op->token = tok;
                 top_op->value = 0;
                 top_op->unary.operand = op;
@@ -334,8 +333,9 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 		lhs = _parse_atom(parser, 0);
 		break;
 	case TOK_ADD: case TOK_MINUS: case TOK_INC: case TOK_DEC:
-		// prefix expression
-		lhs = _parse_prefix(parser, curr_bp);
+		// prefix expression, call with 0 because _parse_prefix is directly recursive, and we
+                // don't want curr_bp in _parse_expr to interfere with _parse_prefix
+		lhs = _parse_prefix(parser, 0);
 		break;
 	default:
 		panic("bad token at _parse_expr");
