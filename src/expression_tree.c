@@ -284,7 +284,7 @@ static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree op)
         while (1) {
                 parser_advance(parser);
                 Token tok = parser_peek(parser);
-                if (tok.type != TOK_INC && tok.type != TOK_DEC) {
+                if (!(tok.type == TOK_INC || tok.type == TOK_DEC)) {
                         break;
                 }
 
