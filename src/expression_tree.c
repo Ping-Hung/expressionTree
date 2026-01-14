@@ -290,12 +290,12 @@ static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree op)
                 }
 
                 ExpressionTree top_op = _alloc_node();
+				// somehow compound literal initialization will result in ASTNode loss (loosing op)
                 top_op->token = tok;
                 top_op->value = 0;
                 top_op->unary.operand = op;
                 top_op->binary.right  = NULL;   // initialize this field to prevent access uninit.
                                                 // memory during traversal
-
                 op = top_op;
         }
         return op;
