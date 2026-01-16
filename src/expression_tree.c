@@ -195,7 +195,7 @@ static inline ExpressionTree _parse_atom(Parser *parser, precedence_t curr_bp)
 	case TOK_LPAREN:
 		// recursive case: 
 		parser_advance(parser);
-		node = _parse_expr(parser, 0);
+		node = _parse_expr(parser, curr_bp + 1);
 		break;
 	default:
 		panic("expecting TOK_VAR|TOK_LIT|'(' as the first token in _parse_atom");
@@ -309,20 +309,20 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 
 	// make lhs
 	switch (parser_peek(parser).type) {
-	case TOK_EOF:	
-		// base case: empty expr ⇒  empty node (Ø)
-		return NULL;
-	case TOK_VAR: case TOK_LIT: case TOK_LPAREN:
-		// Atom := TOK_LIT | TOK_VAR | '(' expr ')'
-		lhs = _parse_atom(parser, 0);
-		break;
-	case TOK_ADD: case TOK_MINUS: case TOK_INC: case TOK_DEC:
-		// prefix expression, call with 0 because _parse_prefix is directly recursive, and we
-                // don't want curr_bp in _parse_expr to interfere with _parse_prefix
-		lhs = _parse_prefix(parser, 0);
-		break;
-	default:
-		panic("bad token at _parse_expr");
+        case TOK_EOF:	
+                // base case: empty expr ⇒  empty node (Ø)
+                return NULL;
+        case TOK_VAR: case TOK_LIT: case TOK_LPAREN:
+                // Atom := TOK_LIT | TOK_VAR | '(' expr ')'
+                lhs = _parse_atom(parser, 0);
+                break;
+        case TOK_ADD: case TOK_MINUS: case TOK_INC: case TOK_DEC:
+                // prefix expressions, call with 0 to let this directly recursive function handle
+                // parsing independently.
+                lhs = _parse_prefix(parser, 0);
+                break;
+        default:
+                panic("bad token at _parse_expr");
 	}
 
 	// parser->curr[0] is the last token of lhs at this point, which should be an operator
