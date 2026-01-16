@@ -17,6 +17,7 @@ static inline void _infix_bp(precedence_t *lbp, precedence_t *rbp, Token token);
 // expression parsing
 static inline ExpressionTree _parse_atom(Parser *parser, precedence_t curr_bp);
 static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp);
+static inline ExpressionTree _parse_infix(Parser *parser, ExpressionTree lhs, precedence_t curr_bp);
 static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree lhs);
 static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp);
 
@@ -186,7 +187,7 @@ static inline ExpressionTree _parse_atom(Parser *parser, precedence_t curr_bp)
 
 		node->token = parser_peek(parser);
 		node->value = (node->token.type == TOK_LIT) ? atol(node->token.token_string) : NAN;
-		node->binary.left = NULL; 
+		node->binary.left  = NULL; 
 		node->binary.right = NULL; 
 
                 // TOK_VAR or TOK_LIT might follow '++' or '--', so call _parse_postfix
@@ -201,7 +202,7 @@ static inline ExpressionTree _parse_atom(Parser *parser, precedence_t curr_bp)
 		panic("expecting TOK_VAR|TOK_LIT|'(' as the first token in _parse_atom");
 	}
         // NEVER advance the parser past the ')' in this function, this extra advancement disturbs the grouping
-        // of parenthesized expressions. Leave the task to the callers (_parse_expr or _parse_prefix)
+        // of parenthesized expressions. Leave the task to the callers (_parse_expr)
 	return node;
 }
 
@@ -245,6 +246,13 @@ static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
 	}
 
 	return node;
+}
+
+static inline ExpressionTree _parse_infix(Parser *parser, ExpressionTree lhs, precedence_t curr_bp)
+{
+        /*              Function that parses infix expression                   */
+	assert(parser && "parameter parser must be a valid Parser *");
+        return NULL;
 }
 
 static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree lhs)
@@ -350,7 +358,8 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
                         continue;
 
                 case TOK_VAR: case TOK_LIT: case TOK_LPAREN:
-                        // implicit multiplication cases: lhs '(' expr ')' | lhs TOK_LIT | lhs TOK_VAR, 
+                        // implicit multiplication cases: 
+                        // lhs '(' expr ')' | lhs TOK_LIT | lhs TOK_VAR, 
                         // which are atoms
                         lhs = _parse_atom(parser, curr_bp);
                         op->token = (Token) {
