@@ -98,6 +98,7 @@ The expression ``a ++ b`` obeys the grammar rules defined above, and there are 2
 operator could be associated with variables `a` and `b`.
 1. ``a * (++b)``
 2. ``(a++) * b``
+
 This project chooses the second way, which says _"any `++` or `--` that is preceeded by either a
 variable or literal is going to be treated as unary postfix increment/decrement expressions"._
 
