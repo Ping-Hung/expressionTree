@@ -347,21 +347,21 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 		switch (op->token.type) {
 		case TOK_INC: case TOK_DEC:
 			lhs = _parse_postfix(parser, op);
-			continue;
+                        continue;
 
                 case TOK_VAR: case TOK_LIT: case TOK_LPAREN:
                         // implicit multiplication cases: lhs '(' expr ')' | lhs TOK_LIT | lhs TOK_VAR, 
                         // which are atoms
-			lhs = _parse_atom(parser, curr_bp);
-			op->token = (Token) {
-				.type = TOK_MULT, 
-				.token_string = "*",
-				.length = 1
-			};
+                        lhs = _parse_atom(parser, curr_bp);
+                        op->token = (Token) {
+                                .type = TOK_MULT, 
+                                .token_string = "*",
+                                .length = 1
+                        };
 
-			op->binary.right = lhs;
-			lhs = op;
-			continue;
+                        op->binary.right = lhs;
+                        lhs = op;
+                        continue;
 		default:
 			break;
 		}
