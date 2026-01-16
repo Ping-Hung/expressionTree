@@ -85,7 +85,8 @@ Consider the expression ``(a + b) (a - b) / 2``, notice that implicit multiplica
 division shares the same precedence. 
 2 possible groupings of the expression above are
 1. ``((a + b) * (a - b)) / 2``
-2. ``(a + b) * ((a - b) / 2)``
+2. ``(a + b) * ((a - b) / 2)``	
+
 The grammar rule defined previously urges second grouping, which this project obeys.
 
 ### Warning on Mixing `IncDec` and Implicit Multiplication
@@ -175,3 +176,4 @@ Assume `gcc` and `Make` are available on the machine.
 1. https://github.com/PixelRifts/math-expr-evaluator/tree/master
 2. https://craftinginterpreters.com
 3. https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
+
