@@ -15,28 +15,32 @@ regex.
 # Grammar:
 - The following context free grammar defines how the lexical symbols could be ordered to form meaningful
   mathematical expression.
+- Non-terminals are lower-cased words like `expr`, `mult`, `unary`
+- Terminals are `TOK_LIT` and `TOK_VAR`, which are defined with regex
+- The precedence of each rule will determine how "tall" they are in the resulting AST, in the following grammar, the rules/non-terminals that are closer to the bottom have higher precedence.
+
 ```
-		expr	:=  expr '+' Mult
-			|   expr '-' Mult
-			|   Mult
+		expr	:=  expr '+' mult
+			|   expr '-' mult
+			|   mult
 
-		Mult	:= Mult '*' Unary
-			|  Mult '/' Unary
-			|  Mult '%' Unary
-			|  Mult Atom		// implicit multiplication
-			|  Unary
+		mult	:= mult '*' unary
+			|  mult '/' unary
+			|  mult '%' unary
+			|  mult atom		// implicit multiplication
+			|  unary
 
-		Unary	:= '+' Unary
-			|  '-' Unary
-			|  IncDec
+		unary	:= '+' unary
+			|  '-' unary
+			|  incdec
 
-		IncDec  := '++' IncDec
-			|  '--' IncDec
-			|  IncDec '++'
-			|  IncDec '--'
-			|  Atom
+		incdec  := '++' incdec
+			|  '--' incdec
+			|  incdec '++'
+			|  incdec '--'
+			|  atom
 
-		Atom	:= TOK_LIT | TOK_VAR | '(' expr ')'
+		atom	:= TOK_LIT | TOK_VAR | '(' expr ')'
 
 		TOK_VAR	:= ^[A-Za-z]+[_A-Za-z0-9]*$
 		TOK_LIT	:= ^[0-9]+$
@@ -81,7 +85,7 @@ Consider the expression ``(a + b) (a - b) / 2``, notice that implicit multiplica
 division shares the same precedence. 
 2 possible groupings of the expression above are
 1. ``((a + b) * (a - b)) / 2``
-2. ``(a + b) * ((a - b) / 2``
+2. ``(a + b) * ((a - b) / 2)``
 The grammar rule defined previously urges second grouping, which this project obeys.
 
 ### Warning on Mixing `IncDec` and Implicit Multiplication
