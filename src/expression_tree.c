@@ -273,7 +273,7 @@ static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree lhs)
                 }
 
                 ExpressionTree top_op = _alloc_node();
-                // somehow compound literal initialization will result in ASTNode loss (loosing op)
+                // somehow compound literal initialization will result in ASTNode loss (loosing lhs)
                 top_op->token = tok;
                 top_op->value = 0;
                 top_op->unary.operand = lhs;

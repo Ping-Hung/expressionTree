@@ -76,19 +76,6 @@ This differs from regular programming language grammar for which above syntax co
 			 |__"b"
   ```
 
-### Implicit Multiplication and Its **Right Associativity**
-- The grammar rule ``Mult := Mult Atom`` suggests **right associativity**; non-terminal ``Atom`` has higher
-  precedence than the non-terminal ``Mult``, which puts ``Atom`` closer to the bottom of the AST.  
-
-#### Example 
-Consider the expression ``(a + b) (a - b) / 2``, notice that implicit multiplication and binary
-division shares the same precedence. 
-2 possible groupings of the expression above are
-1. ``((a + b) * (a - b)) / 2``
-2. ``(a + b) * ((a - b) / 2)``	
-
-The grammar rule defined previously urges second grouping, which this project obeys.
-
 ### Warning on Mixing `IncDec` and Implicit Multiplication
 - Mixing prefix `IncDec`, postfix `IncDec`, and implicit multiplication together is **strongly discouraged**,
   however, this project did handle them.
