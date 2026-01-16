@@ -249,7 +249,6 @@ static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
 
 static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree lhs)
 {
-
         /*           Funtion that parses general postfix expressions
          *                      postfix := Atom+ ['++'|'--']*
          * It should:

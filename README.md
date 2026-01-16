@@ -52,7 +52,9 @@ This differs from regular programming language grammar for which above syntax co
 ```
 	("+"|"-") < ("*"|"/"|"%") < ("++"|"--")
 ```
-## Notes on `IncDec` (`++` or `--`)
+
+## Caveats
+### Notes on `IncDec` (`++` or `--`)
 - They are right associative and have the highest precedence, meaning that expression `a b ++ ⇔  a * (b++)`
   and `++ a b ⇔  (++a) * b`.
 - Their respective parse trees are: 
@@ -70,15 +72,35 @@ This differs from regular programming language grammar for which above syntax co
 			 |__"b"
   ```
 
-## Caveats to Mixing `IncDec` and Implicit Multiplication
+### Implicit Multiplication and Its **Right Associativity**
+- The grammar rule ``Mult := Mult Atom`` suggests **right associativity**; non-terminal ``Atom`` has higher
+  precedence than the non-terminal ``Mult``, which puts ``Atom`` closer to the bottom of the AST.  
+
+#### Example 
+Consider the expression ``(a + b) (a - b) / 2``, notice that implicit multiplication and binary
+division shares the same precedence. 
+2 possible groupings of the expression above are
+1. ``((a + b) * (a - b)) / 2``
+2. ``(a + b) * ((a - b) / 2``
+The grammar rule defined previously urges second grouping, which this project obeys.
+
+### Warning on Mixing `IncDec` and Implicit Multiplication
 - Mixing prefix `IncDec`, postfix `IncDec`, and implicit multiplication together is **strongly discouraged**,
   however, this project did handle them.
-### Example
-Consider the expression ``a++ --b``, there are 2 possible interpretations:
+
+#### Example 1
+The expression ``a ++ b`` obeys the grammar rules defined above, and there are 2 ways the `++`
+operator could be associated with variables `a` and `b`.
+1. ``a * (++b)``
+2. ``(a++) * b``
+This project chooses the second way, which says _"any `++` or `--` that is preceeded by either a
+variable or literal is going to be treated as unary postfix increment/decrement expressions"._
+
+#### Example 2
+Consider the expression ``a++ --b``, there are 2 possible groupings:
 1. ``a++ --b ⇔ (a++) * (--b)``
 2. ``a++ --b ⇔ ((a++)--) * b``
-- This project generates AST with the second interpretation, as the author deemed the second interpretation
-preserves right associativity the best.
+- This project goes with the second grouping when generating ASTs.
 - However, and to reiterate, it is **strongly discouraged** to write expressions similar to above example.
 
 
@@ -149,15 +171,3 @@ Assume `gcc` and `Make` are available on the machine.
 1. https://github.com/PixelRifts/math-expr-evaluator/tree/master
 2. https://craftinginterpreters.com
 3. https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
-
-
-
-
-
-
-
-
-
-
-
-
