@@ -241,10 +241,11 @@ static inline ExpressionTree _parse_atom(Parser *parser, precedence_t curr_bp)
 		node = _alloc_node();
 		node->token = tok;
 		node->value = (node->token.type == TOK_LIT) ? atol(node->token.token_string) : NAN;
+                // technically don't need following inits, but do it to show we are making leaf nodes
 		node->binary.left  = NULL; 
 		node->binary.right = NULL; 
-
-                parser_advance(parser); // move parser past TOK_LIT|TOK_VAR
+                // single TOK_LIT|TOK_VAR is potentially a postfix expression, calling _parse_postfix
+                node = _parse_postfix(parser, node);  
 		break;
 	case TOK_LPAREN:
         // (indirectly) recursive case: 
