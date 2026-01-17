@@ -100,6 +100,7 @@ static inline ExpressionTree _alloc_node()
         if (!node) {
                 panic("malloc failed when allocating ASTNode");
         }
+        *node = (ASTNode) { 0 };        // zero out allocated struct to prevent uninit. memory access
         return node;
 }
 
@@ -147,7 +148,7 @@ static inline void _prefix_bp(precedence_t *lbp, precedence_t *rbp, Token token)
 		{*lbp = 0, *rbp = 8;}
 		break;
         case TOK_LIT: case TOK_VAR: case TOK_LPAREN:
-                // they are all atoms, which have the lowest binding power
+        // they are all atoms, which have the lowest binding power
 		{*lbp = 0, *rbp = 0;}
 		break;
 	default:
@@ -187,40 +188,40 @@ static inline ExpressionTree _parse_expr(Parser *parser)
 
 	// make lhs
 	ExpressionTree lhs = NULL;
-	switch (parser_peek(parser).type) {
+        Token tok = parser_peek(parser);
+	switch (tok.type) {
         case TOK_EOF:	
-                // base case: empty expr ⇒  empty node (Ø)
+        // base case: empty expr ⇒  empty node (Ø)
                 return NULL;
         case TOK_VAR: case TOK_LIT: case TOK_LPAREN:
                 lhs = _parse_atom(parser, 0);
                 break;
         case TOK_ADD: case TOK_MINUS: case TOK_INC: case TOK_DEC:
-                // prefix expressions, call with 0 for _parse_prefix to handle the rest
-                // independently
+        // prefix expressions, call with 0 so _parse_prefix can handle the rest independently
                 lhs = _parse_prefix(parser, 0);
                 break;
         default:
                 panic("bad token at _parse_expr");
 	}
-        lhs->binary.right = NULL;    // init. this to prevent uninit. memory access during traversal
 
         // lhs should be completely parsed at this stage
 	// parser->curr[0] should now be an operator
         while (1) {
-                Token tok = parser_peek(parser);
-                if (tok.type == TOK_EOF || tok.type == TOK_ERROR) {
-                        break;
-                }
-                if (tok.type == TOK_RPAREN) {
-                        // ')' marks the end of a nested expression, skip them and return to the
-                        // caller
+                tok = parser_peek(parser);
+                switch (tok.type) {
+                case TOK_EOF: case TOK_ERROR:
+                        goto exit;
+                case TOK_RPAREN:
+                // ')' marks the end of a nested expression, skip them and return to the caller
                         parser_advance(parser);
+                        goto exit;
+                default:
                         break;
                 }
-
                 // now tok **must** be an operator, so use _parse_infix to handle it
                 lhs = _parse_infix(parser, lhs, 0);
 	}
+exit:
 	return lhs;
 }
 
@@ -246,15 +247,15 @@ static inline ExpressionTree _parse_atom(Parser *parser, precedence_t curr_bp)
                 parser_advance(parser); // move parser past TOK_LIT|TOK_VAR
 		break;
 	case TOK_LPAREN:
-		// recursive case: 
+        // (indirectly) recursive case: 
 		parser_advance(parser);
 		node = _parse_expr(parser);
 		break;
 	default:
 		panic("expecting TOK_VAR|TOK_LIT|'(' as the first token in _parse_atom");
 	}
-        // NEVER advance the parser past the ')' in this function, this extra advancement disturbs the grouping
-        // of parenthesized expressions. Leave the task to the callers (_parse_expr)
+        // NEVER advance the parser past the ')' in this function, this extra advancement disturbs
+        // the grouping of parenthesized expressions. Leave the task to the callers (_parse_expr)
 	return node;
 }
 
@@ -278,18 +279,14 @@ static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
         // recursive cases
 	case TOK_ADD: case TOK_MINUS: case TOK_INC: case TOK_DEC:
 		node = _alloc_node();
-
 		node->token = parser_peek(parser);
 		node->value = 0;
-                // init children to prevent reading uninitialized memory during traversal
-                node->unary.operand = NULL;
-		node->binary.right  = NULL; 
 
 		parser_advance(parser);
                 _prefix_bp(&lbp, &rbp, parser_peek(parser));
                 if (curr_bp <= rbp) { 
-                        // compare how "tight" the new token(s) binds to the right, ≤ curr_bp means
-                        // they reside lower in the tree. Recursively build them.
+                // compare how "tight" the new token(s) binds to the right, ≤ curr_bp means they
+                // reside lower in the tree. Recursively build them.
                         node->unary.operand = _parse_prefix(parser, lbp);
                 }
 		break;
@@ -314,13 +311,23 @@ static inline ExpressionTree _parse_infix(Parser *parser, ExpressionTree lhs, pr
         precedence_t lbp, rbp;
         while (1) {
                 Token tok = parser_peek(parser);
-                assert(tok.type != TOK_RPAREN);
-                if (tok.type == TOK_ERROR || tok.type == TOK_EOF) {
+                switch (tok.type) {
+                case TOK_ERROR: case TOK_EOF:
+                        goto exit;
+                case TOK_RPAREN:
+                        parser_advance(parser);
+                        continue;
+                default:
                         break;
                 }
 
                 // decide how "tight" op binds to the left and right
-                _infix_bp(&lbp, &rbp, tok);
+                if (tok.type == TOK_INC || tok.type == TOK_DEC) {
+                        _prefix_bp(&lbp, &rbp, tok);
+                } else {
+                        _infix_bp(&lbp, &rbp, tok);
+                }
+
                 if (curr_bp > lbp) {
                         break;
                 }
@@ -350,6 +357,7 @@ static inline ExpressionTree _parse_infix(Parser *parser, ExpressionTree lhs, pr
                 op->binary.right = _parse_expr(parser);
                 lhs = op;
         }
+exit:
         return lhs;
 }
 
@@ -377,14 +385,11 @@ static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree lhs)
                 if (!(tok.type == TOK_INC || tok.type == TOK_DEC)) {
                         break;
                 }
-
                 ExpressionTree top_op = _alloc_node();
                 // somehow compound literal initialization will result in ASTNode loss (loosing lhs)
                 top_op->token = tok;
                 top_op->value = 0;
                 top_op->unary.operand = lhs;
-                top_op->binary.right  = NULL;   // initialize this field to prevent access uninit.
-                                                // memory during traversal
                 lhs = top_op;
         }
         return lhs;
