@@ -355,8 +355,8 @@ static inline ExpressionTree _parse_infix(Parser *parser, ExpressionTree lhs, pr
 
                 // parse the last expr 
                 parser_advance(parser);
-                op->binary.right = _parse_expr(parser);
                 lhs = op;
+                lhs->binary.right = _parse_expr(parser);
         }
 exit:
         return lhs;
