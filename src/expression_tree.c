@@ -196,15 +196,15 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
         while (tok.type != TOK_EOF && tok.type != TOK_ERROR) {
                 tok = parser_peek(parser);
                 if (tok.type == TOK_RPAREN) {
-                        // ')' marks the end of a nested expression, so return it to the caller, and
-                        // let it decides if parsing continues
+                        // ')' marks the end of a nested expression, return it to the caller and let
+                        // it decides if parsing continues
                         parser_advance(parser);
                         break;
                 }
                 // now tok **must** be an operator, so use _parse_infix to handle it
                 bp = _assign_bp(tok);   
-                if (curr_bp <= bp.lbp) {
-                     // extra curr_bp check to ensure precedence, if curr_bp 
+                if (curr_bp >= bp.lbp) {
+                     // curr_bp ≥ bp.lbp meant current lhs resides lower in the tree, so return
                         break;
                 }
                 lhs = _parse_infix(parser, lhs, bp.rbp);
@@ -274,8 +274,8 @@ static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
 		parser_advance(parser);
                 bp = _assign_prefix(parser_peek(parser));
                 if (curr_bp <= bp.rbp) { 
-                // compare how "tight" the new token(s) binds to the right, ≤ curr_bp means they
-                // reside lower in the tree. Recursively build them.
+                        // the next token's precedence ≤ current token's precedence:
+                        // means it resides lower in the tree, recursively build it.
                         node->unary.operand = _parse_prefix(parser, bp.lbp);
                 }
 		break;
@@ -312,12 +312,6 @@ static inline ExpressionTree _parse_infix(Parser *parser, ExpressionTree lhs, pr
                 panic("bad token passed to _parse_infix");
         }
 
-        // decide how "tight" op binds to the left and right
-        bp = _assign_bp(tok);
-        if (curr_bp > bp.lbp) {
-                return lhs;
-        }
-
         // make an op node
         ExpressionTree op = _alloc_node();
         op->token = tok;
@@ -337,9 +331,16 @@ static inline ExpressionTree _parse_infix(Parser *parser, ExpressionTree lhs, pr
         default:
                 break;
         } 
+        lhs = op;
+        // decide how "tight" op binds to the left and right
+        bp = _assign_bp(lhs->token);
+        if (curr_bp >= bp.lbp) {
+                // curr_bp ≥ bp.lbp meant current lhs resides lower in the tree, so return
+                free(op);
+                return lhs;
+        }
 
         // parse the last expr 
-        lhs = op;
         parser_advance(parser);
         lhs->binary.right = _parse_expr(parser, bp.rbp);
         return lhs;
