@@ -1,3 +1,6 @@
+# Status
+## This project is now undergoing major refactoring for bug fix
+* A workable version with some bugs is in version 1.0.0
 # ExpressionTree
 This is an attempt to create a simple scanner (tokenizer) and parser that builds a parse tree from a
 user specified mathematical expression, where Pratt parsing is used as the main algorithm for tree
