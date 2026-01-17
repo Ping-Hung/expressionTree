@@ -22,11 +22,13 @@ binding_power_t binaryOperatorLUT[] = {
 	[TOK_MINUS]	= {.lbp = 1, .rbp = 2},
 
 	[TOK_MULT]	= {.lbp = 3, .rbp = 4},
-	[TOK_DIV]	= {.lbp = 3, .rbp = 4},
-	[TOK_MOD]	= {.lbp = 3, .rbp = 4},
+        // implicit multiplication
         [TOK_LPAREN]    = {.lbp = 3, .rbp = 4},
         [TOK_LIT]       = {.lbp = 3, .rbp = 4},
-        [TOK_VAR]       = {.lbp = 3, .rbp = 4}
+        [TOK_VAR]       = {.lbp = 3, .rbp = 4},
+
+	[TOK_DIV]	= {.lbp = 3, .rbp = 4},
+	[TOK_MOD]	= {.lbp = 3, .rbp = 4}
 };
 
 binding_power_t unaryOperatorLUT[] = {
@@ -35,8 +37,8 @@ binding_power_t unaryOperatorLUT[] = {
         [TOK_LIT]       = {.lbp = 0, .rbp = 0},
         [TOK_VAR]       = {.lbp = 0, .rbp = 0},
 
-	[TOK_ADD] 	= {.lbp = 1, .rbp = 2},
-	[TOK_MINUS]	= {.lbp = 1, .rbp = 2},
+	[TOK_ADD] 	= {.lbp = 0, .rbp = 6},
+	[TOK_MINUS]	= {.lbp = 0, .rbp = 6},
 
         [TOK_INC]       = {.lbp = 0, .rbp = 8},
         [TOK_DEC]       = {.lbp = 0, .rbp = 8}
@@ -50,8 +52,8 @@ static inline ExpressionTree _alloc_node();
 static inline int _expr_error_idx(Token *expr, size_t length);
 
 // binding power assignment
-static inline void _prefix_bp(precedence_t *lbp, precedence_t *rbp, Token token);
-static inline void _infix_bp(precedence_t *lbp, precedence_t *rbp, Token token);
+static inline binding_power_t _assign_prefix(Token token);
+static inline binding_power_t _assign_infix(Token token);
 
 // expression parsing
 static inline ExpressionTree _parse_expr(Parser *parser);
@@ -68,8 +70,8 @@ ExpressionTree expressiontree_build_tree(Tokenizer *tkz)
 	int error = _expr_error_idx(tkz->tokens, tkz->n_tokens);
 	if (error != tkz->n_tokens) {
 		char const *expr = tkz->tokens[0].token_string;
-		int expr_len = tkz->tokens[tkz->n_tokens - 1].token_string +
-			       tkz->tokens[tkz->n_tokens - 1].length - expr;
+                int expr_len = tkz->tokens[tkz->n_tokens - 1].token_string +
+                               tkz->tokens[tkz->n_tokens - 1].length - expr;
 
 		if (error > -1) {
 			fprintf(stderr, "expression \"%.*s\" contains invalid token \"%.*s\"\n",
@@ -165,42 +167,26 @@ static inline int _expr_error_idx(Token *expr, size_t length)
 	return good_paren ? length : -1;
 }
 
-static inline void _prefix_bp(precedence_t *lbp, precedence_t *rbp, Token token)
+static inline binding_power_t _assign_prefix(Token token)
 {
-        // all valid operators are treated as unary operators in this function
-	assert("parameter lbp and rbp must be valid precedence_t *'s" && lbp && rbp);
 	switch (token.type) {
-	case TOK_ADD: case TOK_MINUS:
-		{*lbp = 0, *rbp = 6;}
-		break;
-	case TOK_INC: case TOK_DEC:
-		{*lbp = 0, *rbp = 8;}
-		break;
-        case TOK_LIT: case TOK_VAR: case TOK_LPAREN:
-        // they are all atoms, which have the lowest binding power
-		{*lbp = 0, *rbp = 0;}
-		break;
-	default:
-		panic("bad prefix token in _prefix_bp");
+        case TOK_EOF: case TOK_RPAREN: case TOK_ERROR:
+        case TOK_MULT: case TOK_DIV: case TOK_MOD: 
+		panic("bad token passed to _assign_prefix");
+        default:
+                return unaryOperatorLUT[token.type];
 	}
 }
 
-static inline void _infix_bp(precedence_t *lbp, precedence_t *rbp, Token token)
+static inline binding_power_t _assign_infix(Token token)
 {
-        // all valid operators are treated as binary operators in this function
-	assert("parameter lbp and rbp must be valid precedence_t *'s" && lbp && rbp);
-	switch (token.type) {
-	case TOK_ADD: case TOK_MINUS:
-		{*lbp = 1, *rbp = 2;}
-		break;
-	case TOK_MULT: case TOK_DIV: case TOK_MOD:
-        // implicit multiplication, treat them like regular multiplication
-        case TOK_LIT: case TOK_VAR: case TOK_LPAREN: 
-		{*lbp = 3, *rbp = 4;}
-		break;
-	default:
-		panic("bad infix token type passed to _infix_bp");
-	}
+        switch (token.type) {
+        case TOK_EOF: case TOK_RPAREN: case TOK_ERROR:
+        case TOK_INC: case TOK_DEC:
+		panic("bad token passed to _assign_infix");
+        default:
+                return binaryOperatorLUT[token.type];
+        }
 }
 
 static inline ExpressionTree _parse_expr(Parser *parser)
@@ -248,7 +234,7 @@ static inline ExpressionTree _parse_expr(Parser *parser)
                         break;
                 }
                 // now tok **must** be an operator, so use _parse_infix to handle it
-                lhs = _parse_infix(parser, lhs, 0);
+                lhs = _parse_infix(parser, lhs, 0);     // passing 0 in each time might be the problem
 	}
 exit:
 	return lhs;
@@ -297,7 +283,7 @@ static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
         assert(parser && "parameter parser needs to be a valid Parser *");
 
         ExpressionTree node = NULL;
-	precedence_t lbp, rbp;
+        binding_power_t bp = (binding_power_t) { 0 };
 
 	switch (parser_peek(parser).type) {
         // base cases
@@ -313,11 +299,11 @@ static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
 		node->value = 0;
 
 		parser_advance(parser);
-                _prefix_bp(&lbp, &rbp, parser_peek(parser));
-                if (curr_bp <= rbp) { 
+                bp = _assign_prefix(parser_peek(parser));
+                if (curr_bp <= bp.rbp) { 
                 // compare how "tight" the new token(s) binds to the right, ≤ curr_bp means they
                 // reside lower in the tree. Recursively build them.
-                        node->unary.operand = _parse_prefix(parser, lbp);
+                        node->unary.operand = _parse_prefix(parser, bp.lbp);
                 }
 		break;
 	default:
@@ -338,7 +324,7 @@ static inline ExpressionTree _parse_infix(Parser *parser, ExpressionTree lhs, pr
          */
 	assert(parser && "parameter parser must be a valid Parser *");
         assert(lhs && "parameter lhs must be a valid ExpressionTree (ASTNode *)");
-        precedence_t lbp, rbp;
+        binding_power_t bp = (binding_power_t) { 0 };
         while (1) {
                 Token tok = parser_peek(parser);
                 switch (tok.type) {
@@ -352,13 +338,11 @@ static inline ExpressionTree _parse_infix(Parser *parser, ExpressionTree lhs, pr
                 }
 
                 // decide how "tight" op binds to the left and right
-                if (tok.type == TOK_INC || tok.type == TOK_DEC) {
-                        _prefix_bp(&lbp, &rbp, tok);
-                } else {
-                        _infix_bp(&lbp, &rbp, tok);
-                }
+                bp = (tok.type == TOK_INC || tok.type == TOK_DEC) ? 
+                        _assign_prefix(tok) :
+                        _assign_infix(tok);
 
-                if (curr_bp > lbp) {
+                if (curr_bp > bp.lbp) {
                         break;
                 }
 
@@ -371,7 +355,7 @@ static inline ExpressionTree _parse_infix(Parser *parser, ExpressionTree lhs, pr
                 switch (tok.type) {
                 case TOK_LIT: case TOK_VAR: case TOK_LPAREN:
                         op->token = (Token) {.type = TOK_MULT, .token_string = "*", .length = 1};
-                        op->binary.right = _parse_atom(parser, rbp);
+                        op->binary.right = _parse_atom(parser, bp.rbp);
                         lhs = op;
                         continue;
                 case TOK_INC: case TOK_DEC:
