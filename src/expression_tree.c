@@ -3,6 +3,45 @@
 #include "../headers/Parser.h"
 
 typedef char precedence_t;
+typedef struct {precedence_t lbp, rbp;} binding_power_t;
+
+// common data structures
+static char const *operatorSymbolLUT[] = {
+	[TOK_ADD] 	= "+",
+	[TOK_MINUS]	= "-",
+	[TOK_MULT]	= "*",
+	[TOK_DIV]	= "/",
+	[TOK_MOD]	= "%",
+	[TOK_INC]	= "++",
+	[TOK_DEC]	= "--"
+};
+
+binding_power_t binaryOperatorLUT[] = {
+        // highest precedence is at the bottom
+	[TOK_ADD] 	= {.lbp = 1, .rbp = 2},
+	[TOK_MINUS]	= {.lbp = 1, .rbp = 2},
+
+	[TOK_MULT]	= {.lbp = 3, .rbp = 4},
+	[TOK_DIV]	= {.lbp = 3, .rbp = 4},
+	[TOK_MOD]	= {.lbp = 3, .rbp = 4},
+        [TOK_LPAREN]    = {.lbp = 3, .rbp = 4},
+        [TOK_LIT]       = {.lbp = 3, .rbp = 4},
+        [TOK_VAR]       = {.lbp = 3, .rbp = 4}
+};
+
+binding_power_t unaryOperatorLUT[] = {
+        // highest precedence is at the bottom
+        [TOK_LPAREN]    = {.lbp = 0, .rbp = 0},
+        [TOK_LIT]       = {.lbp = 0, .rbp = 0},
+        [TOK_VAR]       = {.lbp = 0, .rbp = 0},
+
+	[TOK_ADD] 	= {.lbp = 1, .rbp = 2},
+	[TOK_MINUS]	= {.lbp = 1, .rbp = 2},
+
+        [TOK_INC]       = {.lbp = 0, .rbp = 8},
+        [TOK_DEC]       = {.lbp = 0, .rbp = 8}
+};
+
 
 // static helpers declaration
 // common helper
@@ -48,16 +87,6 @@ ExpressionTree expressiontree_build_tree(Tokenizer *tkz)
 	ExpressionTree root = _parse_expr(&parser);
 	return root;
 }
-
-static char const *operatorSymbolLUT[] = {
-	[TOK_ADD] 	= "+",
-	[TOK_MINUS]	= "-",
-	[TOK_MULT]	= "*",
-	[TOK_DIV]	= "/",
-	[TOK_MOD]	= "%",
-	[TOK_INC]	= "++",
-	[TOK_DEC]	= "--"
-};
 
 void expressiontree_print_to_file(FILE *fp, int depth, ExpressionTree root)
 {
