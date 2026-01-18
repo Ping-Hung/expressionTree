@@ -21,7 +21,6 @@ static inline binding_power_t _assign_infix(Token token);
 static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp);
 static inline ExpressionTree _parse_atom(Parser *parser, precedence_t curr_bp);
 static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp);
-static inline ExpressionTree _parse_infix(Parser *parser, ExpressionTree lhs, precedence_t curr_bp);
 static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree lhs);
 
 // main apis
@@ -148,8 +147,8 @@ static inline binding_power_t _assign_bp(Token token)
 static inline binding_power_t _assign_prefix(Token token)
 {
 	switch (token.type) {
-        case TOK_LPAREN: case TOK_LIT: case TOK_VAR:
-        // atoms have lowest bp
+        case TOK_LPAREN: case TOK_LIT: case TOK_VAR:   
+        // atoms with the lowest bp
                 return (binding_power_t) {.lbp = 0, .rbp = 0};
         case TOK_ADD: case TOK_MINUS:
                 return (binding_power_t) {.lbp = 0, .rbp = 6};
@@ -178,37 +177,64 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 {
 	/*      Entry point of all forms expression parsing, assume infix by default.
 	 *  			expr := expr op expr
-	 *  1) Build up the leftmost expr to the right of := and store it in lhs
-         *          - look at the first token parser points/refers to and deduce its semantic meaning
-         *          = advance parser to the operator token
-         *  2) if there are more tokens after the first expr, call _parse_infix, and store the result
-         *     in lhs.
+	 *  1) Build up the first expr on the rhs of the above rule, and store it in lhs
+         *      - parser is advanced, and should point to op after this
+         *  2) 
          *  3) return lhs when no tokens are left
 	 */ 
 	assert(parser && "parameter parser must be a valid Parser *");
 
-	// make lhs
 	ExpressionTree lhs = _parse_prefix(parser, 0);
-        // lhs should be completely parsed at this stage
-	// parser->curr[0] should now be an operator or a ')'
-        binding_power_t bp = (binding_power_t) { 0 };
-        Token tok = parser_peek(parser);
-        while (tok.type != TOK_EOF && tok.type != TOK_ERROR) {
-                tok = parser_peek(parser);
-                if (tok.type == TOK_RPAREN) {
-                        // ')' marks the end of a nested expression, return it to the caller and let
-                        // it decides if parsing continues
+        // lhs should be completely parsed at this, and stage parser->curr[0] should now be an
+        // operator or a ')'
+        for (Token tok = parser_peek(parser); tok.type != TOK_EOF && tok.type != TOK_ERROR; tok = parser_peek(parser)) {
+                switch (tok.type) {
+                case TOK_RPAREN:
+                // ')' marks the end of a nested expression
                         parser_advance(parser);
+                        tok = parser_peek(parser);
+                        continue;
+                case TOK_ADD: case TOK_MINUS:
+                case TOK_MULT: case TOK_DIV: case TOK_MOD:
+                case TOK_LIT: case TOK_VAR: case TOK_LPAREN:
+                case TOK_INC: case TOK_DEC:
+                        break;
+                default:
+                        panic("Invalid operator token in _parse_expr");
+                }
+
+                // now tok **must** be an operator, decide its relative position in the tree
+                binding_power_t bp = _assign_bp(tok);   
+                if (curr_bp > bp.lbp) {
+                     // curr_bp > bp.lbp meant current lhs resides lower in the tree, so return
                         break;
                 }
-                // now tok **must** be an operator, so use _parse_infix to handle it
-                bp = _assign_bp(tok);   
-                if (curr_bp >= bp.lbp) {
-                     // curr_bp ≥ bp.lbp meant current lhs resides lower in the tree, so return
+
+                // make an op node
+                ExpressionTree op = _alloc_node();
+                op->token = tok;
+                op->value = 0;
+                op->binary.left = lhs;
+                switch (tok.type) {
+                case TOK_LIT: case TOK_VAR: case TOK_LPAREN:    // implicit multiplication
+                        op->token = (Token) {.type = TOK_MULT, .token_string = "*", .length = 1};
+                        bp = _assign_bp(tok);
+                        op->binary.right = _parse_atom(parser, 0);
+                        lhs = op;
+                        tok = parser_peek(parser);
+                        continue;
+                case TOK_INC: case TOK_DEC:     // (lhs op) is a postfix expression
+                        lhs = _parse_postfix(parser, op);
+                        tok = parser_peek(parser);
+                        continue;
+                default:        // regular binary operators
                         break;
-                }
-                lhs = _parse_infix(parser, lhs, bp.rbp);
+                } 
+
+                // recursively build expr on the right
+                lhs = op;
                 parser_advance(parser);
+                lhs->binary.right = _parse_expr(parser, bp.rbp);
 	}
 	return lhs;
 }
@@ -284,66 +310,6 @@ static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
 	}
 
 	return node;
-}
-
-static inline ExpressionTree _parse_infix(Parser *parser, ExpressionTree lhs, precedence_t curr_bp)
-{
-        /*              Function that parses infix expression                   
-         *                       expr := expr op expr
-         * - Handles ``op expr`` part of an infix expression
-         * - Expects parser to point to an operator or a ')' token 
-         *   **note: a single TOK_LIT and TOK_VAR is equivalent to a '*' (implicit multiplication)**
-         * - Assumes lhs is a valid ASTNode 
-         */
-        assert(parser && "parameter parser must be a valid Parser *");
-        assert(lhs && "parameter lhs must be a valid ExpressionTree (ASTNode *)");
-
-        binding_power_t bp = (binding_power_t) { 0 };
-        Token tok = parser_peek(parser);
-        switch (tok.type) {
-        case TOK_ERROR: case TOK_EOF:   // base case
-                return lhs;
-        case TOK_ADD: case TOK_MINUS:
-        case TOK_MULT: case TOK_DIV: case TOK_MOD:
-        case TOK_LIT: case TOK_VAR: case TOK_LPAREN:
-        case TOK_INC: case TOK_DEC:
-                break;
-        default:
-                panic("bad token passed to _parse_infix");
-        }
-
-        // make an op node
-        ExpressionTree op = _alloc_node();
-        op->token = tok;
-        op->value = 0;
-        op->binary.left = lhs;
-        switch (tok.type) {
-        case TOK_LIT: case TOK_VAR: case TOK_LPAREN:
-                // implicit multiplication
-                op->token = (Token) {.type = TOK_MULT, .token_string = "*", .length = 1};
-                bp = _assign_bp(tok);
-                op->binary.right = _parse_atom(parser, 0);
-                break;
-        case TOK_INC: case TOK_DEC:
-                // (lhs op) is a postfix expression
-                lhs = _parse_postfix(parser, op);
-                break;
-        default:
-                break;
-        } 
-        lhs = op;
-        // decide how "tight" op binds to the left and right
-        bp = _assign_bp(lhs->token);
-        if (curr_bp >= bp.lbp) {
-                // curr_bp ≥ bp.lbp meant current lhs resides lower in the tree, so return
-                free(op);
-                return lhs;
-        }
-
-        // parse the last expr 
-        parser_advance(parser);
-        lhs->binary.right = _parse_expr(parser, bp.rbp);
-        return lhs;
 }
 
 static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree lhs)
