@@ -185,7 +185,7 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 	assert(parser && "parameter parser must be a valid Parser *");
 
 	ExpressionTree lhs = _parse_prefix(parser, curr_bp);
-        // lhs should be completely parsed at this, and stage parser->curr[0] should now be an
+        // lhs should be completely parsed at this stage, and parser->curr[0] should now be an
         // operator or a ')'
         while (1) {
                 Token tok = parser_peek(parser);
