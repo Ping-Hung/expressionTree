@@ -193,8 +193,7 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
                 case TOK_EOF: case TOK_ERROR:
                         goto exit;
                 case TOK_RPAREN:
-                        // ')' means end of a nested expression, advance parser and return
-                        parser_advance(parser);
+                        // ')' means end of a nested expression, return
                         goto exit;
                 case TOK_ADD: case TOK_MINUS:
                 case TOK_MULT: case TOK_DIV: case TOK_MOD:
@@ -208,7 +207,7 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
                 // now tok **must** be an operator, decide its relative position in the tree
                 binding_power_t bp = _assign_bp(tok);   
                 if (curr_bp >= bp.lbp) {
-                     // curr_bp ≥ bp.lbp meant current lhs resides lower in the tree, so return
+                        // curr_bp ≥ bp.lbp meant current lhs resides lower in the tree, so return
                         break;
                 }
 
@@ -260,8 +259,6 @@ static inline ExpressionTree _parse_atom(Parser *parser, precedence_t curr_bp)
                 // technically don't need following inits, but do it to show we are making leaf nodes
 		node->binary.left  = NULL; 
 		node->binary.right = NULL; 
-                // single TOK_LIT|TOK_VAR is potentially a postfix expression, calling _parse_postfix
-                node = _parse_postfix(parser, node);  // parser will be past any postfix expression after this
 		break;
 	case TOK_LPAREN:
         // (indirectly) recursive case: 
@@ -271,6 +268,8 @@ static inline ExpressionTree _parse_atom(Parser *parser, precedence_t curr_bp)
 	default:
 		panic("expecting TOK_VAR|TOK_LIT|'(' as the first token in _parse_atom");
 	}
+        // recall postfix := Atom+['++'|'--']*
+        node = _parse_postfix(parser, node);  // parser will be past any postfix expression after this
         // NEVER advance the parser past the ')' in this function, this extra advancement disturbs
         // the grouping of parenthesized expressions. Leave the task to the callers (_parse_expr)
 	return node;
@@ -285,8 +284,8 @@ static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
 
         ExpressionTree node = NULL;
         binding_power_t bp = (binding_power_t) { 0 };
-
-	switch (parser_peek(parser).type) {
+        Token token = parser_peek(parser);
+	switch (token.type) {
         // base cases
         case TOK_EOF:
                 break;
@@ -296,11 +295,12 @@ static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
         // recursive cases
 	case TOK_ADD: case TOK_MINUS: case TOK_INC: case TOK_DEC:
 		node = _alloc_node();
-		node->token = parser_peek(parser);
+		node->token = token;
 		node->value = 0;
 
 		parser_advance(parser);
-                bp = _assign_prefix(parser_peek(parser));
+                token = parser_peek(parser);
+                bp = _assign_prefix(token);
                 if (curr_bp <= bp.rbp) { 
                         // the next token's precedence ≤ current token's precedence:
                         // means it resides lower in the tree, recursively build it.
@@ -319,10 +319,11 @@ static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree lhs)
         /*           Funtion that parses general postfix expressions
          *                      postfix := Atom+ ['++'|'--']*
          * It should:
+         *      - Assumes parser points to ['++'|'--']
          *      - Construct an AST for postfix expressions.
          *      - Change where lhs is referring to (pointing to) when neccessary.
          *      - Advance parser to consume all the {'++', '--'} tokens.
-         *      - Move parser->curr  to the start of the expression following this postfix expression
+         *      - Move parser->curr to the start of whatever follows this postfix expression
          *        before returning.
          */
         assert(parser && "parameter parser needs to be a valid Parser *");

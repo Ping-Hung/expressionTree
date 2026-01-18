@@ -1,6 +1,4 @@
 # Status
-## This project is now undergoing major refactoring for bug fix
-* A workable version with some bugs is in version 1.0.0
 # ExpressionTree
 This is an attempt to create a simple scanner (tokenizer) and parser that builds a parse tree from a
 user specified mathematical expression, where Pratt parsing is used as the main algorithm for tree
@@ -12,8 +10,7 @@ The tokenizer recognizes the following as valid symbols:
 - integral numeric literals (regex `^[0-9]+$`)
 - operators (one of `{'+', '-', '*', '/', '%', '++', '--'}`) 
 
-Put it simply, this section describes what symbols are going to be recognized as "meaningful" tokens using
-regex. 
+Put simply, this section describes "meaningful" symbols to this program using regex
 
 # Grammar:
 - The following context free grammar defines how the lexical symbols could be ordered to form meaningful
