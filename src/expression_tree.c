@@ -340,7 +340,6 @@ static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree lhs)
                 top_op->value = 0;
                 top_op->unary.operand = lhs;
                 lhs = top_op;
-
         }
         return lhs;
 }
