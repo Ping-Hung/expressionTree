@@ -178,22 +178,24 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 	/*      Entry point of all forms expression parsing, assume infix by default.
 	 *  			expr := expr op expr
 	 *  1) Build up the first expr on the rhs of the above rule, and store it in lhs
-         *      - parser is advanced, and should point to op after this
-         *  2) 
+         *      - parser is advanced and pointing to op after this
+         *  2) parse the op node, and recursively parse the last expr
          *  3) return lhs when no tokens are left
 	 */ 
 	assert(parser && "parameter parser must be a valid Parser *");
 
-	ExpressionTree lhs = _parse_prefix(parser, 0);
+	ExpressionTree lhs = _parse_prefix(parser, curr_bp);
         // lhs should be completely parsed at this, and stage parser->curr[0] should now be an
         // operator or a ')'
-        for (Token tok = parser_peek(parser); tok.type != TOK_EOF && tok.type != TOK_ERROR; tok = parser_peek(parser)) {
+        while (1) {
+                Token tok = parser_peek(parser);
                 switch (tok.type) {
+                case TOK_EOF: case TOK_ERROR:
+                        goto exit;
                 case TOK_RPAREN:
-                // ')' marks the end of a nested expression
+                        // ')' means end of a nested expression, advance parser and return
                         parser_advance(parser);
-                        tok = parser_peek(parser);
-                        continue;
+                        goto exit;
                 case TOK_ADD: case TOK_MINUS:
                 case TOK_MULT: case TOK_DIV: case TOK_MOD:
                 case TOK_LIT: case TOK_VAR: case TOK_LPAREN:
@@ -205,8 +207,8 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 
                 // now tok **must** be an operator, decide its relative position in the tree
                 binding_power_t bp = _assign_bp(tok);   
-                if (curr_bp > bp.lbp) {
-                     // curr_bp > bp.lbp meant current lhs resides lower in the tree, so return
+                if (curr_bp >= bp.lbp) {
+                     // curr_bp ≥ bp.lbp meant current lhs resides lower in the tree, so return
                         break;
                 }
 
@@ -218,8 +220,7 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
                 switch (tok.type) {
                 case TOK_LIT: case TOK_VAR: case TOK_LPAREN:    // implicit multiplication
                         op->token = (Token) {.type = TOK_MULT, .token_string = "*", .length = 1};
-                        bp = _assign_bp(tok);
-                        op->binary.right = _parse_atom(parser, 0);
+                        op->binary.right = _parse_atom(parser, bp.rbp);
                         lhs = op;
                         tok = parser_peek(parser);
                         continue;
@@ -236,6 +237,7 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
                 parser_advance(parser);
                 lhs->binary.right = _parse_expr(parser, bp.rbp);
 	}
+exit:
 	return lhs;
 }
 
@@ -264,7 +266,7 @@ static inline ExpressionTree _parse_atom(Parser *parser, precedence_t curr_bp)
 	case TOK_LPAREN:
         // (indirectly) recursive case: 
 		parser_advance(parser);
-		node = _parse_expr(parser, curr_bp);
+		node = _parse_expr(parser, 0);
 		break;
 	default:
 		panic("expecting TOK_VAR|TOK_LIT|'(' as the first token in _parse_atom");
@@ -289,7 +291,7 @@ static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
         case TOK_EOF:
                 break;
         case TOK_LIT: case TOK_VAR: case TOK_LPAREN:
-                node = _parse_atom(parser, 0);
+                node = _parse_atom(parser, curr_bp);
                 break;
         // recursive cases
 	case TOK_ADD: case TOK_MINUS: case TOK_INC: case TOK_DEC:
@@ -325,15 +327,10 @@ static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree lhs)
          */
         assert(parser && "parameter parser needs to be a valid Parser *");
         assert(lhs && "parameter lhs needs to be a valid ExpressionTree");
-        if (!(lhs->token.type == TOK_LIT || lhs->token.type == TOK_VAR ||
-              lhs->token.type == TOK_INC || lhs->token.type == TOK_DEC)) {
-                panic("paramenter lhs must be either a LIT, VAR, '++' or '--' in parse_postfix");
-        }
-
-        while (1) {
+        while (1){
                 parser_advance(parser);
                 Token tok = parser_peek(parser);
-                if (!(tok.type == TOK_INC || tok.type == TOK_DEC)) {
+                if (tok.type != TOK_INC && tok.type != TOK_DEC) {
                         break;
                 }
                 ExpressionTree top_op = _alloc_node();
@@ -342,6 +339,7 @@ static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree lhs)
                 top_op->value = 0;
                 top_op->unary.operand = lhs;
                 lhs = top_op;
+
         }
         return lhs;
 }
