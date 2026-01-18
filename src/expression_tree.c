@@ -328,7 +328,7 @@ static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree lhs)
          */
         assert(parser && "parameter parser needs to be a valid Parser *");
         assert(lhs && "parameter lhs needs to be a valid ExpressionTree");
-        while (1){
+        while (1) {
                 parser_advance(parser);
                 Token tok = parser_peek(parser);
                 if (tok.type != TOK_INC && tok.type != TOK_DEC) {
