@@ -16,7 +16,8 @@ Put simply, this section describes "meaningful" symbols to this program using re
   mathematical expression.
 - Non-terminals are lower-cased words like `expr`, `mult`, `unary`
 - Terminals are `TOK_LIT` and `TOK_VAR`, which are defined with regex
-- The precedence of each rule will determine how "tall" they are in the resulting AST, in the following grammar, the rules/non-terminals that are closer to the bottom have higher precedence.
+- The precedence of each rule will determine how "tall" they are in the resulting AST, in the
+  following grammar, the rules/non-terminals that are closer to the bottom have higher precedence.
 
 ```
 		expr	:=  expr '+' mult
@@ -69,10 +70,10 @@ This differs from regular programming language grammar for which above syntax co
   ```
   and
   ```
-			"*"
-			 |__"++"
-			  |__"a"
-			 |__"b"
+		"*"
+		 |__"++"
+		  |__"a"
+		 |__"b"
   ```
 
 ### Warning on Mixing `IncDec` and Implicit Multiplication
@@ -93,8 +94,10 @@ Consider the expression ``a++ --b``, there are 2 possible groupings:
 1. ``a++ --b ⇔ (a++) * (--b)``
 2. ``a++ --b ⇔ ((a++)--) * b``
 - This project goes with the second grouping when generating ASTs.
-- However, and to reiterate, it is **strongly discouraged** to write expressions similar to above example.
 
+- To reiterate, it is **strongly discouraged** to write expressions similar to above example, the
+  correct way to do so is either using the conventional `*` operator or parentheses to specify
+  associativity.
 
 # Output (parseTree.txt)
 - The output is a simple visual display of the AST. Specifically, a pre-order tree-walk of the AST.
