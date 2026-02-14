@@ -42,7 +42,7 @@ Put simply, this section describes "meaningful" symbols to this program using re
 
 		atom	:= TOK_LIT | TOK_VAR | '(' expr ')'
 
-		TOK_VAR	:= ^[A-Za-z]+[_A-Za-z0-9]*$
+		TOK_VAR	:= ^[A-Za-z_]+[_A-Za-z0-9]*$
 		TOK_LIT	:= ^[0-9]+$
 ```
 
