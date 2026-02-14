@@ -1,0 +1,14 @@
+root = true
+[*.{c,h}]
+
+indent_style = space
+indent_size = 8
+end_of_line = lf
+charset = utf-8
+
+# Indent case contents relative to the case label
+cpp_indent_case_contents = true
+# Do not indent the 'case' labels themselves relative to the 'switch'
+cpp_indent_case_labels = false
+# When using a block within a case, indent the contents of that block
+cpp_indent_case_contents_when_block = true

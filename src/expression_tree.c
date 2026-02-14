@@ -190,9 +190,8 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
         while (1) {
                 Token tok = parser_peek(parser);
                 switch (tok.type) {
-                case TOK_EOF: case TOK_ERROR:
-                        goto exit;
-                case TOK_RPAREN:
+                case TOK_EOF: case TOK_ERROR: case TOK_RPAREN:
+                        // Base cases
                         // ')' means end of a nested expression, return
                         goto exit;
                 case TOK_ADD: case TOK_MINUS:
