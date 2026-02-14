@@ -21,24 +21,24 @@ Put simply, this section describes "meaningful" symbols to this program using re
 
 ```
 		expr	:=  expr '+' mult
-			|   expr '-' mult
-			|   mult
+                |   expr '-' mult
+                |   mult
 
 		mult	:= mult '*' unary
-			|  mult '/' unary
-			|  mult '%' unary
-			|  mult atom		// implicit multiplication
-			|  unary
+                |  mult '/' unary
+                |  mult '%' unary
+                |  mult atom		// implicit multiplication
+                |  unary
 
 		unary	:= '+' unary
-			|  '-' unary
-			|  incdec
+                |  '-' unary
+                |  incdec
 
 		incdec  := '++' incdec
-			|  '--' incdec
-			|  incdec '++'
-			|  incdec '--'
-			|  atom
+                |  '--' incdec
+                |  incdec '++'
+                |  incdec '--'
+                |  atom
 
 		atom	:= TOK_LIT | TOK_VAR | '(' expr ')'
 
@@ -116,9 +116,9 @@ Consider the expression ``a++ --b``, there are 2 possible groupings:
 - Implicit mulitiplication will be handled by manually making an extra `*` node between the two operands.
 	- Expressions`2 a` and `a 2` will thus become
 	```
-		"*"		"*"
-		 |__"2"		 |__"a"
-		 |__"a"		 |__"2"
+		"*"                "*"
+		 |__"2"             |_"a"
+		 |__"a"             |_"2"
 	```
 
 
