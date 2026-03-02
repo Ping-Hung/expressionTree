@@ -301,7 +301,7 @@ static inline ExpressionTree _parse_prefix(Parser *parser, precedence_t curr_bp)
                 token = parser_peek(parser);
                 bp = _assign_prefix(token);
                 if (curr_bp <= bp.rbp) { 
-                        // the next token's precedence ≤ current token's precedence:
+                        // the next token's precedence (bp) ≥ current token's precedence:
                         // means it resides lower in the tree, recursively build it.
                         node->unary.operand = _parse_prefix(parser, bp.lbp);
                 }
