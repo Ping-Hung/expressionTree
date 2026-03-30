@@ -27,8 +27,15 @@ int main(void)
 			fprintf(stdout, "input failure, try again: ");
 		}
 	}
+
 build:
-	if (isspace(str[input_size - 1])) {
+        if (input_size <= 0) {
+                fprintf(stdout, "entered empty input, exiting...\n");
+                free(str);
+                return EXIT_SUCCESS;
+        }
+
+	if (isspace(str[input_size - 1])) {     /* if user input is empty, input_size == 0, this line is error prone */
 		str[input_size - 1] = '\0';
 	}
 	fprintf(stdout, "input expression: \"%.*s\"\nlength: %ld\n", 
