@@ -29,7 +29,7 @@ int main(void)
 	}
 
 build:
-        if (input_size <= 0) {
+        if (input_size == 0) {
                 fprintf(stdout, "entered empty input, exiting...\n");
                 free(str);
                 return EXIT_SUCCESS;
