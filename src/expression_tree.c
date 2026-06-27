@@ -212,9 +212,12 @@ static inline ExpressionTree _parse_expr(Parser *parser, precedence_t curr_bp)
 
                 // make an op node
                 ExpressionTree op = _alloc_node();
-                op->token = tok;
-                op->value = 0;
-                op->binary.left = lhs;
+                *op = (ASTNode) {
+                        .token = tok,
+                        .value = 0,
+                        .binary.left = lhs
+                };
+
                 switch (tok.type) {
                 case TOK_LIT: case TOK_VAR: case TOK_LPAREN:    // implicit multiplication
                         op->token = (Token) {.type = TOK_MULT, .token_string = "*", .length = 1};
@@ -334,10 +337,12 @@ static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree lhs)
                         break;
                 }
                 ExpressionTree top_op = _alloc_node();
-                // somehow compound literal initialization will result in ASTNode loss (loosing lhs)
-                top_op->token = tok;
-                top_op->value = 0;
-                top_op->unary.operand = lhs;
+
+                *top_op = (ASTNode) {
+                        .token = tok,
+                        .value = 0,
+                        .unary.operand = lhs
+                };
                 lhs = top_op;
         }
         return lhs;
