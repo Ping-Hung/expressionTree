@@ -5,7 +5,8 @@
 
 typedef struct {
 	Token *curr;
-	Token const *end;
+        Token *const end;       /* fixed addr of a *mutable* Token (Token itself can change, but
+                                   Parser shall never modify where end points to*/
 } Parser;  // 0 ≤ end - curr < number of tokens 
 
 static inline Parser parser_init(Tokenizer *tkz)
@@ -33,7 +34,7 @@ static inline Token parser_advance(Parser *parser)
 	// advance curr, then return the token it was pointing to before hand
 	assert(parser && "parameter parser must be a valid Parser *");
 	if (parser->curr < parser->end) {
-		parser->curr++;
+		++parser->curr;
 	}
 	return parser->curr[-1];
 }
