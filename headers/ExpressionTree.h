@@ -6,13 +6,11 @@
 
 // Inspired by https://github.com/PixelRifts/math-expr-evaluator/tree/master
 
-// Tnode: a node in the parse tree (AST)
-// 	- token: Token (have token string and length)
-// - can either be a leaf node, unary operator node, or a binary operator node
+/* ASTNode: a node in the parse tree (AST) */
 typedef struct ASTNode {
 	Token token;
-	long value;	// the (partial) result of the entire expression evaluated at this node 
-			// value == NAN indicates this node is a TOK_VAR
+        long value;	/* the (partial) result of the entire expression evaluated at this node
+                           value == NAN indicates this node is a TOK_VAR */
 	union {
 		struct { struct ASTNode *operand; } unary;
 		struct { struct ASTNode *left; struct ASTNode *right; } binary;
