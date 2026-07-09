@@ -7,7 +7,7 @@ typedef struct {
 	Token *curr;
         Token *const end;       /* fixed addr of a *mutable* Token (Token itself can change, but
                                    Parser shall never modify where end points to*/
-} Parser;  // 0 ≤ end - curr < number of tokens 
+} Parser;  // 0 ≤ end - curr ≤ number of tokens 
 
 static inline Parser parser_init(Tokenizer *tkz)
 {
