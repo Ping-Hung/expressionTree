@@ -321,12 +321,14 @@ static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree lhs)
         /*           Funtion that parses general postfix expressions
          *                      postfix := Atom+ ['++'|'--']*
          * It should:
-         *      - Assumes parser points to ['++'|'--']
          *      - Construct an AST for postfix expressions.
          *      - Change where lhs is referring to (pointing to) when neccessary.
          *      - Advance parser to consume all the {'++', '--'} tokens.
          *      - Move parser->curr to the start of whatever follows this postfix expression
          *        before returning.
+         * Case 1: parser (still) refers to an Atom, not advanced yet
+         * Case 2: parser (still) refers to the first ['++'|'--'] seen
+         * In both cases, parser shall advance before constructing an ASTNode to avoid double count.
          */
         assert(parser && "parameter parser needs to be a valid Parser *");
         assert(lhs && "parameter lhs needs to be a valid ExpressionTree");
@@ -336,8 +338,8 @@ static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree lhs)
                 if (tok.type != TOK_INC && tok.type != TOK_DEC) {
                         break;
                 }
-                ExpressionTree top_op = _alloc_node();
-
+                ExpressionTree top_op = _alloc_node();  // this node is going "above" original lhs,
+                                                        // thus called `top_op`
                 *top_op = (ASTNode) {
                         .token = tok,
                         .value = 0,
