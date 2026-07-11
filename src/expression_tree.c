@@ -326,8 +326,10 @@ static inline ExpressionTree _parse_postfix(Parser *parser, ExpressionTree lhs)
          *      - Advance parser to consume all the {'++', '--'} tokens.
          *      - Move parser->curr to the start of whatever follows this postfix expression
          *        before returning.
-         * Case 1: parser (still) refers to an Atom, not advanced yet
-         * Case 2: parser (still) refers to the first ['++'|'--'] seen
+         *
+         * Recall Atom := TOK_LIT | TOK_VAR | '(' expr ')'
+         * Case 1: parser (still) refers to an TOK_LIT | TOK_VAR, not advanced yet.
+         * Case 2: parser (still) refers to ')', not advanced yet.
          * In both cases, parser shall advance before constructing an ASTNode to avoid double count.
          */
         assert(parser && "parameter parser needs to be a valid Parser *");
