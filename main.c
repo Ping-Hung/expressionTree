@@ -35,7 +35,7 @@ build:
                 return EXIT_SUCCESS;
         }
 
-	if (isspace(str[input_size - 1])) {     /* if user input is empty, input_size == 0, this line is error prone */
+	if (isspace(str[input_size - 1])) {
 		str[input_size - 1] = '\0';
 	}
 	fprintf(stdout, "input expression: \"%.*s\"\nlength: %ld\n", 
