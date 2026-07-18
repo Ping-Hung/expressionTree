@@ -1,21 +1,20 @@
 # ExpressionTree
-This is an attempt to create a simple scanner (tokenizer) and parser that builds a parse tree from a
-user specified mathematical expression, where Pratt parsing is used as the main tree building
-algorithm.
+A simple arithmetic expression parser written in C. Organizes arithmetic expression (user input
+string) into an Abstract Syntax Tree (AST) which reflects operator precedence and associativity.
 
 # Lexical Symbols
-The tokenizer recognizes the following as valid symbols: 
+The tokenizer classifies the input string into 3 classes:
 - variables (regex `^[A-Za-z_]+[A-Za-z0-9_]$`) 
 - integral numeric literals (regex `^[0-9]+$`)
 - operators (one of `{'+', '-', '*', '/', '%', '++', '--'}`) 
 
-Put simply, this section describes "meaningful" symbols to this program using regex
-
 # Grammar:
-- The following context free grammar defines how the lexical symbols could be ordered to form meaningful
-  mathematical expression.
-- Non-terminals are lower-cased words like `expr`, `mult`, `unary`
-- Terminals are `TOK_LIT` and `TOK_VAR`, which are defined with regex
+- Grammar is defined to formalize the rules of arithmetic (operator precedence, associativity) and
+  outline the output tree structure.
+- Non-terminals are lower-cased words like `expr`, `mult`, `unary`: they could be thought of as
+  recursive "functions" that could be further expanded using the rules defined to the right of `:=`.
+- Terminals are `TOK_LIT` and `TOK_VAR`, they cannot be further expanded and are defined using
+  regex.
 - The precedence of each rule will determine how "tall" they are in the resulting AST, in the
   following grammar, the rules/non-terminals that are closer to the bottom have higher precedence.
 
@@ -77,22 +76,23 @@ This differs from regular programming language grammar for which above syntax co
   ```
 
 ### Warning on Mixing `IncDec` and Implicit Multiplication
-- Mixing prefix `IncDec`, postfix `IncDec`, and implicit multiplication together is **strongly discouraged**,
-  however, this project did handle them.
+- Mixing prefix `IncDec`, postfix `IncDec`, and implicit multiplication together is **strongly discouraged**. 
+- Please refer to following examples for how this project handles such cases.
 
 #### Example 1
-The expression ``a ++ b`` obeys the grammar rules defined above, and there are 2 ways the `++`
+The expression `a ++ b` obeys the grammar rules defined above, and there are 2 ways the `++`
 operator could be associated with variables `a` and `b`.
-1. ``a * (++b)``
-2. ``(a++) * b``
+1. `a * (++b)`
+2. `(a++) * b`
 
-This project chooses the second way, which says _"any `++` or `--` that is preceeded by either a
-variable or literal is going to be treated as unary postfix increment/decrement expressions"._
+This project chooses the second way: <mark>*"any `++` or `--` that is preceeded by either a
+variable or literal is going to be treated as a unary postfix increment/decrement
+expression".*</mark>
 
 #### Example 2
-Consider the expression ``a++ --b``, there are 2 possible groupings:
-1. ``a++ --b ⇔ (a++) * (--b)``
-2. ``a++ --b ⇔ ((a++)--) * b``
+Consider the expression `a++ --b`, there are 2 possible groupings:
+1. `a++ --b ⇔ (a++) * (--b)`
+2. `a++ --b ⇔ ((a++)--) * b`
 - This project goes with the second grouping when generating ASTs.
 
 - To reiterate, it is **strongly discouraged** to write expressions similar to above example, the
@@ -166,4 +166,3 @@ Assume `gcc` and `Make` are available on the machine.
 1. https://github.com/PixelRifts/math-expr-evaluator/tree/master
 2. https://craftinginterpreters.com
 3. https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
-
