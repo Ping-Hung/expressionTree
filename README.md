@@ -120,11 +120,9 @@ Consider the expression `a++ --b`, there are 2 possible groupings:
 		 |__"2"             |_"a"
 		 |__"a"             |_"2"
 	```
-
-
-# Compile/Build Instructions
 - If an `ExpressionTree` is built successfully, it will be printed onto a file named `parseTree.txt` in this directory.
 
+# Compile/Build Instructions
 Assume `gcc` and `Make` are available on the machine.
 
 - refer to `Makefile` for build, test, and clean instructions.
