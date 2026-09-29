@@ -17,7 +17,7 @@ int main(void)
 			fprintf(stdout, "\nentered EOF, program exit\n");
 			free(str);
 			return EXIT_FAILURE;
-		case -2:
+		case -2: /* malloc failed case */
 			fprintf(stdout, "input %*.s is too long for str of size %ld,"
 					" building partial expressionTree\n",
 					(int)buff_size, str, buff_size);
@@ -38,7 +38,8 @@ build:
 	if (isspace(str[input_size - 1])) {
 		str[input_size - 1] = '\0';
 	}
-	fprintf(stdout, "input expression: \"%.*s\"\nlength: %ld\n", 
+	fprintf(stdout, "input expression: \"%.*s\"\n"
+                        "length: %ld\n", 
                         (int)input_size, str, 
 			input_size);
 
@@ -62,24 +63,26 @@ build:
 }
 
 #define BUF_DEFAULT 512
+/**
+ * @param lineptr: an address to address of an allocated character buffer
+ * @param buff_size: an address to a variable holding buffer size
+ *
+ * - Successful read from stdin to *lineptr will return total number of char read except '\0', the
+ *   function will get rid of the '\n' on successful reads.
+ * - Failures will return negative integer
+ * 	- Hitting EOF: *lineptr will contain n_read - 1 chars, *lineptr is *buff_size bytes
+ * 	long.
+ * 	- returns -1.
+ * 	- Realloc failure: *lineptr will contain *buff_size - 1 chars, *lineptr is
+ * 	*buff_size bytes long.
+ * 	- returns -2.
+ *
+ * - getline is irresponsible for freeing memory, the caller must free *lineptr regardless
+ *   the result of getline.
+ *  - *lineptr will always be NULL terminated.
+ */
 static long getline(char **lineptr, size_t *buff_size)
 {
-	/*
-	 * - Successful read from stdin to *lineptr will return number of chars
-	 *   read excluding '\0', the function will get rid of the '\n' on
-	 *   successful reads.
-	 * - Failures will return negative integer
-	 * 	- Hitting EOF: *lineptr will contain n_read - 1 chars, 
-	 * 	  *lineptr is *buff_size bytes long
-	 * 	  - returns -1
-	 * 	- Realloc failure: *lineptr will contain *buff_size - 1 chars,
-	 * 	  *lineptr is *buff_size bytes long
-	 * 	  - returns -2
-	 *
-	 * - getline is irresponsible for freeing memory, the caller must free
-	 *   *lineptr no matter the result of getline
-	 *  - *lineptr will be NULL terminated regardless
-	 */
 	assert(lineptr && "lineptr must be a valid char **");
 	assert(buff_size && "buff_size must be a valid size_t *");
 	if (*lineptr == NULL) {
@@ -109,5 +112,5 @@ static long getline(char **lineptr, size_t *buff_size)
 	if (ch == EOF) {
 		return -1;
 	}
-	return n_read;	// returning all char's read from stdin except '\0'
+	return n_read;	// returning total char read from stdin except '\0'
 }
