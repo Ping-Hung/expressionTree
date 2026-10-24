@@ -1,6 +1,6 @@
 CC = gcc
 FLAGS = -std=c17 -Wall -Werror -Wvla -pedantic -g
-SRC = src/*.c
+SRC = $(wildcard src/*.c)	# a "safer"/"more GNU Make abiding" way of writing wild-card expressions
 HEADERS = headers/*.h
 MAIN = main.c
 EXECUTABLE = expressionTree
