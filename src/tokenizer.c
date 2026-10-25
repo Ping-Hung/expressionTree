@@ -174,8 +174,10 @@ static inline Token _tok_make_var(Token tok, char const *input_end)
 
 static inline Token _tok_make_error(Token tok, char const *input_end)
 {
-	// an error token starts with an illegal symbol, followed by 0 or more 
-	// non-whitespace symbols (i.e. TOK_ERROR := ^(ILLEGAL)+(.)*$).
+        /**
+         * an error token starts with an illegal symbol, followed by 0 or more non-whitespace
+         * symbols (i.e. TOK_ERROR := ^(ILLEGAL)+(.)*$). 
+         * */
 	char const *tok_end = tok.token_string + tok.length;
 	while (tok_end < input_end && !isspace(*tok_end)) {
 		tok_end++;
