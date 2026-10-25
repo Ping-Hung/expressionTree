@@ -19,26 +19,33 @@
  */
 
 enum tok_type_t {
-	// atoms
+	/* atoms */
 	TOK_VAR, TOK_LIT,
-	// operators: just a bunch of reserved symbols that meant math operations
-	//  (what kind of operation will be determined in the parsing/tree-building stage)
+
+        /* operators: reserved symbols that meant math operations (what kind of operation will be
+         * determined in the parsing/tree-building stage) */
+
+        /* binary operators */
 	TOK_ADD,TOK_MINUS,TOK_MULT, TOK_DIV, TOK_MOD,
-	// unary operators
+        /* unary operators */
 	TOK_INC, TOK_DEC,
-	// special symbols (parentheses meant grouping, EOF meant end of expression)
+        /* special symbols (parentheses meant grouping, EOF meant end of expression) */
 	TOK_LPAREN,TOK_RPAREN, TOK_EOF,
-	// error type: none of the above
-	// an TOK_ERROR starts with an illegal character followed by 0 or more
-	// non-whitespace characters
+
+        /* error type: none of the above
+         *  - an TOK_ERROR starts with an illegal character followed by 0 or more non-whitespace
+         *  characters. (i.e. TOK_ERROR ::= (ILLEGAL_CHAR)+(.)*
+         */
 	TOK_ERROR
 };
 
-// Token:
-// 	- token_string: char * := starting address of the token
-// 	- length: size_t := length of the token 
-// 	- type: enum tok_type_t:= what kind of token 
-// 	** want token_string[0...length -  1] to entail all the characters in the actual token **
+/**
+ * Token:
+ * 	- token_string: char * := starting address of the token
+ * 	- length: size_t := length of the token 
+ * 	- type: enum tok_type_t:= what kind of token 
+ * 	** want token_string[0...length -  1] to entail all the characters in the actual token **
+ */
 typedef struct {
 	enum tok_type_t type;
 	char const *token_string;
