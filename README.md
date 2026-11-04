@@ -20,24 +20,24 @@ The tokenizer classifies the input string into 3 classes:
 
 ```
 		expr	:=  expr '+' mult
-                |   expr '-' mult
-                |   mult
+                        |   expr '-' mult
+                        |   mult
 
 		mult	:= mult '*' unary
-                |  mult '/' unary
-                |  mult '%' unary
-                |  mult atom		// implicit multiplication
-                |  unary
+                        |  mult '%' unary
+                        |  mult '/' unary
+                        |  mult atom		// implicit multiplication
+                        |  unary
 
 		unary	:= '+' unary
-                |  '-' unary
-                |  incdec
+                        |  '-' unary
+                        |  incdec
 
 		incdec  := '++' incdec
-                |  '--' incdec
-                |  incdec '++'
-                |  incdec '--'
-                |  atom
+                        |  '--' incdec
+                        |  incdec '++'
+                        |  incdec '--'
+                        |  atom
 
 		atom	:= TOK_LIT | TOK_VAR | '(' expr ')'
 
